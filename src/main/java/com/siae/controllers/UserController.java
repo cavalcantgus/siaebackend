@@ -30,7 +30,7 @@ public class UserController {
 		return ResponseEntity.ok().body(users);
 	}
 	
-	@GetMapping
+	@GetMapping("/{id}")
 	public ResponseEntity<User> findById(Long id) {
 		User user = service.findById(id);
 		return ResponseEntity.ok().body(user);

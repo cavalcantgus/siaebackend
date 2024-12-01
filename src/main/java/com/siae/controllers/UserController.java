@@ -19,7 +19,7 @@ import com.siae.entities.User;
 import com.siae.services.UserService;
 
 @Controller
-@RequestMapping("/users")
+@RequestMapping("/public/users")
 public class UserController {
 	
 	@Autowired UserService service;
@@ -31,12 +31,12 @@ public class UserController {
 	}
 	
 	@GetMapping("/{id}")
-	public ResponseEntity<User> findById(Long id) {
+	public ResponseEntity<User> findById(@PathVariable Long id) {
 		User user = service.findById(id);
 		return ResponseEntity.ok().body(user);
 	}
 	
-	@PostMapping
+	@PostMapping("/register")
 	public ResponseEntity<User> insert(@RequestBody User obj) {
 		User user = service.insert(obj);
 		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(user.getId()).toUri();

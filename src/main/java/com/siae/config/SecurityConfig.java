@@ -12,10 +12,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.siae.JwtSecurityFilter;
-
 import static org.springframework.security.config.Customizer.withDefaults;
 import com.siae.security.CustomPasswordEncoder;
+import com.siae.security.JwtSecurityFilter;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
@@ -45,7 +44,6 @@ public class SecurityConfig {
                     try {
                         requests.anyRequest().authenticated().and().cors(withDefaults());
                     } catch (Exception e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 })

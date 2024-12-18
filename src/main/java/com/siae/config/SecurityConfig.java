@@ -42,7 +42,7 @@ public class SecurityConfig {
                     requests.requestMatchers("/admin/**").hasAuthority("ADMIN");
                     requests.requestMatchers("/login/auth", "/public/**").permitAll();
                     try {
-                        requests.anyRequest().authenticated().and().cors(withDefaults());
+                        requests.anyRequest().permitAll().and().cors(withDefaults());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

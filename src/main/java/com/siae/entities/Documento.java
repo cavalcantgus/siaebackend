@@ -33,7 +33,7 @@ public class Documento {
 	
 	private String filePath;
 	
-	@ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "produtor_id")
 	@JsonBackReference
 	private Produtor produtor;

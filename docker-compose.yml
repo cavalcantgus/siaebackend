@@ -1,0 +1,44 @@
+version:  '3.1'
+
+services:
+
+ spring-app:
+  build:
+   context: .
+   dockerfile: Dockerfile
+  container_name: spring-app
+  ports:
+   - "8080:8080"
+  environment:
+   SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/siae
+   SPRING_DATASOURCE_USERNAME: root
+   SPRING_DATASOURCE_PASSWORD: admin
+  volumes:
+   - uploads:/app/uploads
+  depends_on:
+   - db
+   
+ db:
+  image: mysql:8.0.31
+  container_name: mysql-db
+  ports:
+   - "3307:3306"
+  volumes:
+   - db-data:/var/lib/mysql
+  environment:
+   MYSQL_ROOT_PASSWORD: admin
+   MYSQL_DATABASE: siae
+   
+ phpmyadmin:
+  image: phpmyadmin
+  container_name: phpmyadmin
+  restart: always
+  ports: 
+   - "8000:80"
+  environment:
+   PMA_HOST: db
+   MYSQL_ROOT_PASSWORD: admin
+  
+volumes:
+ db-data:
+ uploads:

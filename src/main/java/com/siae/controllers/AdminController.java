@@ -23,6 +23,6 @@ public class AdminController {
 	@GetMapping("/pending-users")
 	public ResponseEntity<List<User>> listPendingUsers(){
 		String rolename = "PENDENTE";
-		return ResponseEntity.ok(userService.findUsersByRole(RoleName.valueOf(rolename)));
+		return ResponseEntity.ok().body(userService.findUsersByRole(RoleName.valueOf(rolename)));
 	}
 }

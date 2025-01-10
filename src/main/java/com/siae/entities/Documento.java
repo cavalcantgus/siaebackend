@@ -34,7 +34,7 @@ public class Documento {
 	private String filePath;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "produtor_id")
+	@JoinColumn(name = "produtor_id", nullable = false)
 	@JsonBackReference
 	private Produtor produtor;
 	

@@ -36,14 +36,15 @@ public class ProdutorService {
 	}
 	
 	public Produtor insert(Produtor produtor, List<MultipartFile> documentos) {
+		Produtor savedProdutor = produtorRepository.save(produtor);
 		if(documentos != null) {
 			List<Documento> documentosProdutor = documentoService.saveDocs(documentos, produtor);
 			for(Documento documento : documentosProdutor) {
-				produtor.getDocumentos().add(documento);
+				savedProdutor.getDocumentos().add(documento);
 			}
 		}
 		
-		return produtorRepository.save(produtor);
+		return savedProdutor;
 	}
 	
 	public Produtor update(Long id, Produtor produtor, List<MultipartFile> documentos) {

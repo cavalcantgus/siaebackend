@@ -45,6 +45,7 @@ public class ProdutoService {
 
 	private void updateData(Produto produto, Produto produtoTarget) {
 		produtoTarget.setDescricao(produto.getDescricao());
+		produtoTarget.setEspecificacao(produto.getEspecificacao());
 		produtoTarget.setUnidade(produto.getUnidade());
 		produtoTarget.setPrecoMedio(produto.getPrecoMedio());
 	}

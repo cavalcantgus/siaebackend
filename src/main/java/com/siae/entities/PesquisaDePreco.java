@@ -44,10 +44,6 @@ public class PesquisaDePreco {
 	@JoinColumn(name = "produto_id")
 	private Produto produto;
 	
-	private Integer quantidade;
-	
-	private BigDecimal total;
-	
 	private BigDecimal precoMedio;
 
 	@OneToMany(mappedBy = "pesquisa",  cascade = {CascadeType.PERSIST, CascadeType.MERGE})

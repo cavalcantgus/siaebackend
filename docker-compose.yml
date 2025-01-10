@@ -13,7 +13,7 @@ services:
    - SPRING_PROFILES_ACTIVE=mysql
    
   volumes:
-   - ./target:/app
+   - ./target/siae-0.0.1-SNAPSHOT.jar:/app/app.jar
    - uploads:/app/uploads
   depends_on:
    - db
@@ -32,6 +32,12 @@ services:
    MYSQL_DATABASE: siae
   networks:
    - mynetwork
+  healthcheck:
+   test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+   interval: 10s
+   retries: 5
+   start_period: 30s
+   timeout: 10s
    
  phpmyadmin:
   image: phpmyadmin
@@ -42,6 +48,8 @@ services:
   environment:
    PMA_HOST: db
    MYSQL_ROOT_PASSWORD: admin
+  networks:
+   - mynetwork
   
 volumes:
  db-data:

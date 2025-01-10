@@ -41,7 +41,6 @@ public class PesquisaDePrecoService {
 		PesquisaDePreco pesquisaDePreco = new PesquisaDePreco();
 		pesquisaDePreco.setProduto(produto);
 		pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
-		pesquisaDePreco.setQuantidade(pesquisa.getQuantidade());
 		
 		
 		List<Preco> precos = pesquisa.getPreços().stream()
@@ -61,7 +60,6 @@ public class PesquisaDePrecoService {
 		pesquisaDePreco.setPrecos(precos);
 		BigDecimal precoMedio = pesquisaDePreco.precoMedio();
 		pesquisaDePreco.setPrecoMedio(precoMedio);
-		pesquisaDePreco.setTotal(precoMedio.multiply(BigDecimal.valueOf(pesquisa.getQuantidade().longValue())));
 		produto.setPrecoMedio(precoMedio);
 		return repository.save(pesquisaDePreco);
 	}
@@ -82,7 +80,6 @@ public class PesquisaDePrecoService {
 		Produto produto = produtoService.findById(pesquisa.getProduto().getId());
 		pesquisaDePreco.setProduto(produto);
 		pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
-		pesquisaDePreco.setQuantidade(pesquisa.getQuantidade());
 		
 		List<Preco> precosAtualizados = pesquisa.getPrecos().stream()
 			    .map(precoDTO -> {
@@ -108,7 +105,6 @@ public class PesquisaDePrecoService {
 		pesquisaDePreco.setPrecos(precosAtualizados);
 		BigDecimal precoMedio = pesquisaDePreco.precoMedio();
 		pesquisaDePreco.setPrecoMedio(precoMedio);
-		pesquisaDePreco.setTotal(precoMedio.multiply(BigDecimal.valueOf(pesquisa.getQuantidade().longValue())));
 		produto.setPrecoMedio(precoMedio);
 	}
 }

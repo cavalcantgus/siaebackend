@@ -23,6 +23,7 @@ public class Produto {
 	private Long id;
 	
 	private String descricao;
+	private String especificacao;
 	private String unidade;
 	private BigDecimal precoMedio;
 }

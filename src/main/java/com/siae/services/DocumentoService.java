@@ -34,6 +34,7 @@ public class DocumentoService {
 		return documento.orElseThrow(() -> new EntityNotFoundException("Erro"));
 	}
 	
+	@Transactional
 	public List<Documento> saveDocs(List<MultipartFile> documentos, Produtor produtor) {
 		List<Documento> documentosEntidade = documentos.stream()
 				.map(documento -> {

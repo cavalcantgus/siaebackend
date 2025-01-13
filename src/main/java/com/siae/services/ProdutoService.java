@@ -49,4 +49,16 @@ public class ProdutoService {
 		produtoTarget.setUnidade(produto.getUnidade());
 		produtoTarget.setPrecoMedio(produto.getPrecoMedio());
 	}
+	
+	public void deleteById(Long id) {
+		try {
+			if(repository.existsById(id)) {
+				repository.deleteById(id);
+			} else {
+				throw new EntityNotFoundException("Produto não encontrado");
+			}
+		} catch (Exception e) {
+			e.getMessage();
+		}
+	}
 }

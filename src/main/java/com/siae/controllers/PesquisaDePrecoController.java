@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +17,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.siae.dto.PesquisaDePrecoDTO;
 import com.siae.entities.PesquisaDePreco;
-import com.siae.entities.Produto;
 import com.siae.services.PesquisaDePrecoService;
 
 @RestController
@@ -47,5 +47,11 @@ public class PesquisaDePrecoController {
 	public ResponseEntity<PesquisaDePreco> update(@PathVariable Long id, @RequestBody PesquisaDePreco obj) {
 		PesquisaDePreco pesquisa = service.update(id, obj);
 		return ResponseEntity.ok().body(pesquisa);
+	}
+	
+	@DeleteMapping("/pesquisa/{id}")
+	public ResponseEntity<PesquisaDePreco> delete(@PathVariable Long id) {
+		service.deleteById(id);
+		return ResponseEntity.noContent().build();
 	}
 }

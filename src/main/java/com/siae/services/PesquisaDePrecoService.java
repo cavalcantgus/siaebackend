@@ -107,4 +107,19 @@ public class PesquisaDePrecoService {
 		pesquisaDePreco.setPrecoMedio(precoMedio);
 		produto.setPrecoMedio(precoMedio);
 	}
+	
+	public void deleteById(Long id) {
+		try {
+			if(repository.existsById(id)) {
+				PesquisaDePreco pesquisa = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
+				Produto produto = produtoService.findById(pesquisa.getProduto().getId());
+				produto.setPrecoMedio(BigDecimal.valueOf(0.0));
+				repository.deleteById(id);
+			} else {
+				throw new EntityNotFoundException("Pesquisa não encontrada");
+			}
+		} catch (Exception e) {
+			e.getMessage();
+		}
+	}
 }

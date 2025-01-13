@@ -97,4 +97,16 @@ public class ProdutorService {
 		produtorTarget.setEstadoCivil(produtor.getEstadoCivil());
 		produtorTarget.setSexo(produtor.getSexo());
 	}
+	
+	public void deleteById(Long id) {
+		try {
+			if(produtorRepository.existsById(id)) {
+				produtorRepository.deleteById(id);
+			} else {
+				throw new EntityNotFoundException("Produtor não encontrado");
+			}
+		} catch (Exception e) {
+			e.getMessage();
+		}
+	}
 }

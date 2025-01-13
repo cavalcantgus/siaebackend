@@ -69,7 +69,7 @@ public class Produtor {
 	private String estadoCivil;
 	private String sexo;
 	
-	@OneToMany(mappedBy = "produtor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	@OneToMany(mappedBy = "produtor", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
 	@JsonManagedReference
 	private List<Documento> documentos = new ArrayList<>();
 }

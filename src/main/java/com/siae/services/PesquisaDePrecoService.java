@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.siae.dto.PesquisaDePrecoDTO;
-import com.siae.dto.UpdatePesquisaDePrecoDTO;
 import com.siae.entities.PesquisaDePreco;
 import com.siae.entities.Preco;
 import com.siae.entities.Produto;

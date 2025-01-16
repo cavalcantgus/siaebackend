@@ -2,11 +2,14 @@ package com.siae.entities;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,4 +31,8 @@ public class Produto {
 	private String especificacao;
 	private String unidade;
 	private BigDecimal precoMedio;
+	
+	@OneToOne(mappedBy = "produto", orphanRemoval = true)
+	@JsonBackReference
+    private PesquisaDePreco pesquisaDePreco;
 }

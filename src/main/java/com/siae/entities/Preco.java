@@ -32,6 +32,6 @@ public class Preco {
 	
 	@ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "pesquisa_id")
-	@JsonBackReference
+	@JsonBackReference("pesquisa-preco")
 	private PesquisaDePreco pesquisa;
 }

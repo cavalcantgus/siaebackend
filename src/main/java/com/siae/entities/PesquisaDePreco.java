@@ -43,13 +43,14 @@ public class PesquisaDePreco {
 
 	@OneToOne
 	@JoinColumn(name = "produto_id", unique = true, nullable = false)
-	@JsonManagedReference
+	@JsonManagedReference("produto-pesquisa")
 	private Produto produto;
 	
 	private BigDecimal precoMedio;
+	private Integer quantidade;
 
     @OneToMany(mappedBy = "pesquisa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	@JsonManagedReference
+	@JsonManagedReference("pesquisa-preco")
 	private List<Preco> precos = new ArrayList<>();
 
 	@SuppressWarnings("deprecation")

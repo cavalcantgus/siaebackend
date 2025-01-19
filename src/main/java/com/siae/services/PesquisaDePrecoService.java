@@ -33,6 +33,11 @@ public class PesquisaDePrecoService {
 		Optional<PesquisaDePreco> pesquisa = repository.findById(id);
 		return pesquisa.orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
 	}
+	
+	public PesquisaDePreco findByProduto(Produto produto) {
+		PesquisaDePreco pesquisa = repository.findByProduto(produto);
+		return pesquisa;
+	}
 
 	public PesquisaDePreco insert(PesquisaDePrecoDTO pesquisa) {
 		Produto produto = produtoService.findById(pesquisa.getProdutoId());
@@ -40,7 +45,7 @@ public class PesquisaDePrecoService {
 		PesquisaDePreco pesquisaDePreco = new PesquisaDePreco();
 		pesquisaDePreco.setProduto(produto);
 		pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
-		
+		pesquisaDePreco.setQuantidade(pesquisa.getQuantidade());
 		
 		List<Preco> precos = pesquisa.getPreços().stream()
 				.map(preco -> {

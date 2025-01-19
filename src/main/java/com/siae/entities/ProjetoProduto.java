@@ -4,9 +4,7 @@ import java.math.BigDecimal;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,20 +16,33 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "preco")
+@Table(name = "projetoProduto")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Preco {
-
+public class ProjetoProduto {
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	private BigDecimal valor;
+	@ManyToOne
+	@JoinColumn(name = "produto_id", nullable = false)
+	private Produto produto;
 	
-	@ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	@JoinColumn(name = "pesquisa_id")
-	@JsonBackReference("pesquisa-preco")
-	private PesquisaDePreco pesquisa;
+	@ManyToOne
+	@JoinColumn(name = "projeto_id", nullable = false)
+	@JsonBackReference
+	private ProjetoDeVenda projeto;
+	
+	private Integer quantidade;
+	private BigDecimal total;
+	
+	public ProjetoProduto(Produto produto, ProjetoDeVenda projeto, Integer quantidade, BigDecimal total) {
+		this.produto = produto;
+		this.projeto = projeto;
+		this.quantidade = quantidade;
+		this.total = total;
+		
+	}
 }

@@ -74,6 +74,9 @@ public class ProjetoDeVendaService {
 	        projetoProdutos.add(projetoProduto);
 	    }
 		
+		BigDecimal totalGeral = projeto.total(projetoProdutos);
+		projeto.setTotal(totalGeral);
+		
 		projetoProdutoRepository.saveAll(projetoProdutos);
 		projeto.setProjetoProdutos(projetoProdutos);
 		return projeto;

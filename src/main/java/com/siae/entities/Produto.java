@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -41,6 +41,6 @@ public class Produto {
     private PesquisaDePreco pesquisaDePreco;
 	
 	@OneToMany(mappedBy = "produto", cascade = CascadeType.ALL)
-	@JsonManagedReference("produto-projeto")
+	@JsonIgnore
 	private List<ProjetoProduto> projetoProdutos;
 }

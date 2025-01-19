@@ -28,7 +28,6 @@ public class ProjetoProduto {
 	
 	@ManyToOne
 	@JoinColumn(name = "produto_id", nullable = false)
-	@JsonBackReference("produto-projeto")
 	private Produto produto;
 	
 	@ManyToOne

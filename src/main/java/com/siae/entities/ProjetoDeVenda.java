@@ -1,5 +1,6 @@
 package com.siae.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -49,5 +50,12 @@ public class ProjetoDeVenda {
 	@OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL)
 	@JsonManagedReference
 	private List<ProjetoProduto> projetoProdutos;
+	
+	private BigDecimal total;
+	
+	public BigDecimal total(List<ProjetoProduto> projetoProdutos) {
+		return projetoProdutos.stream().map(ProjetoProduto::getTotal)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
 	
 }

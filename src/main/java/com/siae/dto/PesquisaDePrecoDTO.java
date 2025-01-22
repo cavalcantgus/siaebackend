@@ -18,7 +18,7 @@ public class PesquisaDePrecoDTO {
 	
 	private Long produtoId;
 	private LocalDate dataPesquisa;
-	private Integer quantidade;
+	private BigDecimal quantidade;
 	
 	@JsonProperty("precos")
 	private List<BigDecimal> preços;

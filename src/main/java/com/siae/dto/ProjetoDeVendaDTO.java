@@ -1,5 +1,6 @@
 package com.siae.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -15,5 +16,5 @@ public class ProjetoDeVendaDTO {
 	private Long produtorId;
 	private LocalDate dataProjeto;
 	private List<Long> pesquisasId;
-	private List<Integer> quantidade;
+	private List<BigDecimal> quantidade;
 }

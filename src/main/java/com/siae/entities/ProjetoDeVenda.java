@@ -53,8 +53,15 @@ public class ProjetoDeVenda {
 	
 	private BigDecimal total;
 	
+	private BigDecimal quantidadeTotal;
+	
 	public BigDecimal total(List<ProjetoProduto> projetoProdutos) {
 		return projetoProdutos.stream().map(ProjetoProduto::getTotal)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+	
+	public BigDecimal quantidadeTotal(List<ProjetoProduto> projetoProdutos) {
+		return projetoProdutos.stream().map(ProjetoProduto::getQuantidade)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 	

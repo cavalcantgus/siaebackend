@@ -34,8 +34,8 @@ public class PesquisaDePrecoService {
 		return pesquisa.orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
 	}
 	
-	public PesquisaDePreco findByProduto(Produto produto) {
-		PesquisaDePreco pesquisa = repository.findByProduto(produto);
+	public PesquisaDePreco findByProduto(Long produtoId) {
+		PesquisaDePreco pesquisa = repository.findByProdutoId(produtoId);
 		return pesquisa;
 	}
 
@@ -81,36 +81,37 @@ public class PesquisaDePrecoService {
 	}
 
 	private void updateData(PesquisaDePreco pesquisa, PesquisaDePreco pesquisaDePreco) {
-		Produto produto = produtoService.findById(pesquisa.getProduto().getId());
-		pesquisaDePreco.setProduto(produto);
-		pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
-		
-		List<Preco> precosAtualizados = pesquisa.getPrecos().stream()
-			    .map(precoDTO -> {
-			        if (precoDTO == null) {
-			            throw new IllegalArgumentException("Preço não pode ser nulo.");
-			        }
+	    Produto produto = produtoService.findById(pesquisa.getProduto().getId());
+	    pesquisaDePreco.setProduto(produto);
+	    pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
 
-			        Preco preco = new Preco();
-			        preco.setId(precoDTO.getId());
+	    // Atualizar preços sem substituir diretamente a coleção
+	    List<Preco> precosExistentes = pesquisaDePreco.getPrecos();
+	    precosExistentes.clear(); // Limpa a lista existente
 
-			        // Verificar se o valor é nulo e lançar uma exceção ou definir um valor padrão
-			        if (precoDTO.getValor() == null) {
-			            throw new IllegalArgumentException("Valor do preço não pode ser nulo.");
-			        }
+	    pesquisa.getPrecos().forEach(precoDTO -> {
+	        if (precoDTO == null) {
+	            throw new IllegalArgumentException("Preço não pode ser nulo.");
+	        }
 
-			        preco.setValor(precoDTO.getValor());
-			        preco.setPesquisa(pesquisaDePreco); 
-			        return preco;
-			    })
-			    .collect(Collectors.toList());
+	        Preco preco = new Preco();
+	        preco.setId(precoDTO.getId());
 
-		 
-		pesquisaDePreco.setPrecos(precosAtualizados);
-		BigDecimal precoMedio = pesquisaDePreco.precoMedio();
-		pesquisaDePreco.setPrecoMedio(precoMedio);
-		produto.setPrecoMedio(precoMedio);
+	        if (precoDTO.getValor() == null) {
+	            throw new IllegalArgumentException("Valor do preço não pode ser nulo.");
+	        }
+
+	        preco.setValor(precoDTO.getValor());
+	        preco.setPesquisa(pesquisaDePreco);
+	        precosExistentes.add(preco);
+	    });
+
+	    // Calcular preço médio
+	    BigDecimal precoMedio = pesquisaDePreco.precoMedio();
+	    pesquisaDePreco.setPrecoMedio(precoMedio);
+	    produto.setPrecoMedio(precoMedio);
 	}
+
 	
 	public void deleteById(Long id) {
 		try {

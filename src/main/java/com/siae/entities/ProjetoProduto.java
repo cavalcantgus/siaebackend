@@ -35,10 +35,10 @@ public class ProjetoProduto {
 	@JsonBackReference
 	private ProjetoDeVenda projeto;
 	
-	private Integer quantidade;
+	private BigDecimal quantidade;
 	private BigDecimal total;
 	
-	public ProjetoProduto(Produto produto, ProjetoDeVenda projeto, Integer quantidade, BigDecimal total) {
+	public ProjetoProduto(Produto produto, ProjetoDeVenda projeto, BigDecimal quantidade, BigDecimal total) {
 		this.produto = produto;
 		this.projeto = projeto;
 		this.quantidade = quantidade;

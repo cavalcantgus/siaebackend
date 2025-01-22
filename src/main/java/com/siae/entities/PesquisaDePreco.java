@@ -47,7 +47,7 @@ public class PesquisaDePreco {
 	private Produto produto;
 	
 	private BigDecimal precoMedio;
-	private Integer quantidade;
+	private BigDecimal quantidade;
 
     @OneToMany(mappedBy = "pesquisa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonManagedReference("pesquisa-preco")

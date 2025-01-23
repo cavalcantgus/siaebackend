@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.Transient;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -103,61 +105,163 @@ public class ProjetoDeVendaService {
 			
 	}
 
-	private void updateData(ProjetoDeVenda projeto, ProjetoDeVenda projetoDeVenda) {
-	    Produtor produtor = produtorRepository.findById(projeto.getProdutor().getId())
-	            .orElseThrow(() -> new EntityNotFoundException("Produtor não encontrado"));
-	    projetoDeVenda.setProdutor(produtor);
-	    projetoDeVenda.setDataProjeto(projeto.getDataProjeto());
+	@Transactional
+	protected void updateData(ProjetoDeVenda projeto, ProjetoDeVenda projetoDeVenda) {
+		System.out.println("Iniciando o método updateData.");
 
-	    List<ProjetoProduto> projetoProdutosExistentes = projetoDeVenda.getProjetoProdutos();
-	    projetoProdutosExistentes.clear();
+		Produtor produtor = produtorRepository.findById(projeto.getProdutor().getId())
+				.orElseThrow(() -> new EntityNotFoundException("Produtor não encontrado"));
+		projetoDeVenda.setProdutor(produtor);
+		projetoDeVenda.setDataProjeto(projeto.getDataProjeto());
 
-	    projeto.getProjetoProdutos().forEach(projetoProduto -> {
-	        Produto produto = produtoRepository.findById(projetoProduto.getProduto().getId())
-	                .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
+		List<ProjetoProduto> projetoProdutosExistentes = projetoDeVenda.getProjetoProdutos();
 
-	        PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
+		if (projetoProdutosExistentes.size() == 1) {
+			ProjetoProduto p = projetoProdutosExistentes.get(0); // Garantido que só existe um produto
 
-	        if (projetoProduto.getId() == null) {
-	            // Criar um novo ProjetoProduto
-	            BigDecimal quantidade = projetoProduto.getQuantidade();
-	            BigDecimal total = produto.getPrecoMedio().multiply(quantidade);
+			// Verifica se o produto foi alterado
+			projeto.getProjetoProdutos().forEach(projetoProduto -> {
+				if (!projetoProdutosExistentes.contains(projetoProduto)) {
+					System.out.println("Produto alterado detectado. Removendo e criando novo produto.");
 
-	            ProjetoProduto novoProjetoProduto = new ProjetoProduto();
-	            novoProjetoProduto.setProduto(produto);
-	            novoProjetoProduto.setQuantidade(quantidade);
-	            novoProjetoProduto.setTotal(total);
-	            novoProjetoProduto.setProjeto(projetoDeVenda);
+					// Devolver a quantidade à PesquisaDePreco para o produto removido
+					Long produtoId = p.getProduto().getId();
+					PesquisaDePreco pesquisaAnt = pesquisaRepository.findByProdutoId(produtoId);
 
-	            projetoProdutosExistentes.add(novoProjetoProduto);
-	        } else {
-	            // Atualizar um ProjetoProduto existente
-	            ProjetoProduto projetoAnterior = projetoProdutoRepository.findById(projetoProduto.getId())
-	                    .orElseThrow(() -> new EntityNotFoundException("Projeto não encontrado"));
+					if (pesquisaAnt != null) {
+						System.out.println("Quantidade antes de devolver à pesquisaAnt: " + pesquisaAnt.getQuantidade());
+						pesquisaAnt.setQuantidade(pesquisaAnt.getQuantidade().add(p.getQuantidade()));
+						System.out.println("Quantidade após devolver à pesquisaAnt: " + pesquisaAnt.getQuantidade());
+						pesquisaRepository.save(pesquisaAnt);
+					}
 
-	            BigDecimal quantidadeAnterior = projetoAnterior.getQuantidade();
-	            BigDecimal quantidade = projetoProduto.getQuantidade();
+					// Deletar o ProjetoProduto antigo
+					projetoProdutoRepository.delete(p);
 
-	            pesquisa.setQuantidade(pesquisa.getQuantidade().add(quantidadeAnterior).subtract(quantidade));
-	            pesquisaRepository.save(pesquisa);
+					// Adicionar o novo produto
+					BigDecimal total = projetoProduto.getQuantidade().multiply(projetoProduto.getProduto().getPrecoMedio());
+					Long produtoId1 = projetoProduto.getProduto().getId();
+					PesquisaDePreco newPesquisa = pesquisaRepository.findByProdutoId(produtoId1);
 
-	            BigDecimal total = produto.getPrecoMedio().multiply(quantidade);
-	            projetoAnterior.setProduto(produto);
-	            projetoAnterior.setQuantidade(quantidade);
-	            projetoAnterior.setTotal(total);
-	            projetoAnterior.setProjeto(projetoDeVenda);
+					if (newPesquisa != null) {
+						System.out.println("Quantidade antes de subtrair da newPesquisa: " + newPesquisa.getQuantidade());
+						newPesquisa.setQuantidade(newPesquisa.getQuantidade().subtract(projetoProduto.getQuantidade()));
+						System.out.println("Quantidade após subtrair da newPesquisa: " + newPesquisa.getQuantidade());
+						pesquisaRepository.save(newPesquisa);
+					} else {
+						throw new EntityNotFoundException("Pesquisa não encontrada para o novo produto");
+					}
 
-	            projetoProdutosExistentes.add(projetoAnterior);
-	        }
-	    });
+					ProjetoProduto newProjetoProduto = new ProjetoProduto();
+					newProjetoProduto.setProduto(projetoProduto.getProduto());
+					newProjetoProduto.setQuantidade(projetoProduto.getQuantidade());
+					newProjetoProduto.setTotal(total);
+					newProjetoProduto.setProjeto(projetoDeVenda);
+					projetoProdutoRepository.save(newProjetoProduto);
 
-	    projetoProdutoRepository.saveAll(projetoProdutosExistentes);
-	    projetoDeVenda.setProjetoProdutos(projetoProdutosExistentes);
+					projetoProdutosExistentes.add(newProjetoProduto); // Adiciona o novo produto à lista
+				}
+			});
+		}
 
-	    BigDecimal quantidadeTotal = projetoDeVenda.quantidadeTotal(projetoProdutosExistentes);
-	    BigDecimal total = projetoDeVenda.total(projetoProdutosExistentes);
-	    projetoDeVenda.setQuantidadeTotal(quantidadeTotal);
-	    projetoDeVenda.setTotal(total);
+		// Remover produtos que não estão mais no payload e atualizar quantidade na PesquisaDePreco
+		projetoProdutosExistentes.removeIf(projetoProdAnt -> {
+			boolean shouldRemove = projeto.getProjetoProdutos().stream()
+					.noneMatch(projetoProd -> projetoProd.getId().equals(projetoProdAnt.getId()));
+
+			if (shouldRemove) {
+				// Antes de deletar, devolver a quantidade à PesquisaDePreco
+				Produto produto = projetoProdAnt.getProduto();
+				PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
+
+				// Devolver a quantidade ao estoque de PesquisaDePreco
+				pesquisa.setQuantidade(pesquisa.getQuantidade().add(projetoProdAnt.getQuantidade()));
+				pesquisaRepository.save(pesquisa);
+
+				// Deletar o ProjetoProduto
+				projetoProdutoRepository.delete(projetoProdAnt);
+			}
+
+			return shouldRemove;
+		});
+
+		// Para cada produto no payload, atualizar ou adicionar
+		projeto.getProjetoProdutos().forEach(projetoProduto -> {
+			Produto produto = produtoRepository.findById(projetoProduto.getProduto().getId())
+					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
+
+			PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
+
+			if (projetoProduto.getId() == null) {
+				// Criar um novo ProjetoProduto
+				BigDecimal quantidade = projetoProduto.getQuantidade();
+				BigDecimal total = produto.getPrecoMedio().multiply(quantidade);
+
+				ProjetoProduto novoProjetoProduto = new ProjetoProduto();
+				novoProjetoProduto.setProduto(produto);
+				novoProjetoProduto.setQuantidade(quantidade);
+				novoProjetoProduto.setTotal(total);
+				novoProjetoProduto.setProjeto(projetoDeVenda);
+
+				// Atualizar a quantidade da PesquisaDePreco
+				pesquisa.setQuantidade(pesquisa.getQuantidade().subtract(quantidade));
+				pesquisaRepository.save(pesquisa);
+
+				projetoProdutosExistentes.add(novoProjetoProduto);
+			} else {
+				// Atualizar um ProjetoProduto existente
+				ProjetoProduto projetoAnterior = projetoProdutoRepository.findById(projetoProduto.getId())
+						.orElseThrow(() -> new EntityNotFoundException("Projeto não encontrado"));
+
+				BigDecimal quantidadeAnterior = projetoAnterior.getQuantidade();
+				BigDecimal quantidade = projetoProduto.getQuantidade();
+
+				// Atualizar a quantidade na pesquisa
+				pesquisa.setQuantidade(pesquisa.getQuantidade().add(quantidadeAnterior).subtract(quantidade));
+				pesquisaRepository.save(pesquisa);
+
+				BigDecimal total = produto.getPrecoMedio().multiply(quantidade);
+				projetoAnterior.setProduto(produto);
+				projetoAnterior.setQuantidade(quantidade);
+				projetoAnterior.setTotal(total);
+				projetoAnterior.setProjeto(projetoDeVenda);
+
+				// Verificar se o projetoProduto já existe na lista antes de adicionar
+				if (!projetoProdutosExistentes.contains(projetoAnterior)) {
+					projetoProdutosExistentes.add(projetoAnterior);
+				}
+			}
+		});
+
+		// Salvar todos os produtos atualizados ou novos
+		projetoProdutoRepository.saveAll(projetoProdutosExistentes);
+		projetoDeVenda.setProjetoProdutos(projetoProdutosExistentes);
+
+		// Calcular total e quantidade
+		BigDecimal quantidadeTotal = projetoDeVenda.quantidadeTotal(projetoProdutosExistentes);
+		BigDecimal total = projetoDeVenda.total(projetoProdutosExistentes);
+		projetoDeVenda.setQuantidadeTotal(quantidadeTotal);
+		projetoDeVenda.setTotal(total);
 	}
 
+	public void deleteById(Long id) {
+		try {
+			if(id != null && repository.existsById(id)) {
+				ProjetoDeVenda projetoDeVenda = repository.findById(id)
+						.orElseThrow(() -> new EntityNotFoundException("Projeto não encontrado"));
+
+				projetoDeVenda.getProjetoProdutos().forEach(projetoProduto -> {
+					Long produtoId = projetoProduto.getProduto().getId();
+					PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produtoId);
+					pesquisa.setQuantidade(pesquisa.getQuantidade().add(projetoProduto.getQuantidade()));
+					pesquisaRepository.save(pesquisa);
+				});
+				repository.deleteById(id);
+			} else {
+				throw new EntityNotFoundException("Projeto não encontrado");
+			}
+		} catch (Exception e) {
+			e.getMessage();
+		}
+	}
 }

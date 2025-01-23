@@ -46,8 +46,8 @@ public class ProjetoDeVenda {
 	@ManyToOne
     @JoinColumn(name = "produtor_id", nullable = false)
     private Produtor produtor;
-	
-	@OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL)
+
+	@OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonManagedReference
 	private List<ProjetoProduto> projetoProdutos;
 	

@@ -21,8 +21,8 @@ import com.siae.entities.ProjetoProduto;
 @Service
 public class RelatorioProjetoDeVendaPDF {
 	
-	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' LLLL yyyy", new Locale("pt", "BR"));
-	
+	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM yyyy", new Locale("pt", "BR"));
+	DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM", new Locale("pt", "BR"));
 	public byte[] createPdf(ProjetoDeVenda projetoDeVenda) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		
@@ -133,11 +133,11 @@ public class RelatorioProjetoDeVendaPDF {
 		tableProdutos.addHeaderCell(createdStyledCell("PREÇO UNIT. R$"));
 		tableProdutos.addHeaderCell(createdStyledCell("VALOR TOTAL R$"));
 		
-		for(ProjetoProduto p : projetoDeVenda.getProjetoProdutos()) {	
+		for(ProjetoProduto p : projetoDeVenda.getProjetoProdutos()) {
 			tableProdutos.addCell(createdStyledCell(p.getProduto().getDescricao()));
 			tableProdutos.addCell(createdStyledCell(p.getProduto().getUnidade()));
 			tableProdutos.addCell(createdStyledCell(p.getQuantidade().toString()));
-			tableProdutos.addCell(createdStyledCell("-"));
+			tableProdutos.addCell(createdStyledCell(p.getInicioEntrega().format(monthFormatter)) + " a " + p.getFimEntrega().format(monthFormatter));
 			tableProdutos.addCell(createdStyledCell("R$ " + p.getProduto().getPrecoMedio().toString()));
 			tableProdutos.addCell(createdStyledCell("R$ " + p.getTotal().toString()));
 		}

@@ -1,16 +1,16 @@
 package com.siae.entities;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,15 +34,28 @@ public class ProjetoProduto {
 	@JoinColumn(name = "projeto_id", nullable = false)
 	@JsonBackReference
 	private ProjetoDeVenda projeto;
+
+	@Temporal(TemporalType.DATE)
+	@JsonDeserialize(using = LocalDateDeserializer.class)
+	@JsonSerialize(using = LocalDateSerializer.class)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	private LocalDate inicioEntrega;
+
+	@Temporal(TemporalType.DATE)
+	@JsonDeserialize(using = LocalDateDeserializer.class)
+	@JsonSerialize(using = LocalDateSerializer.class)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	private LocalDate fimEntrega;
 	
 	private BigDecimal quantidade;
 	private BigDecimal total;
 	
-	public ProjetoProduto(Produto produto, ProjetoDeVenda projeto, BigDecimal quantidade, BigDecimal total) {
+	public ProjetoProduto(Produto produto, ProjetoDeVenda projeto, BigDecimal quantidade, BigDecimal total, LocalDate inicioEntrega, LocalDate fimEntrega) {
 		this.produto = produto;
 		this.projeto = projeto;
 		this.quantidade = quantidade;
 		this.total = total;
-		
+		this.inicioEntrega = inicioEntrega;
+		this.fimEntrega = fimEntrega;
 	}
 }

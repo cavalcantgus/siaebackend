@@ -1,6 +1,7 @@
 package com.siae.services;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,8 @@ public class ProjetoDeVendaService {
 		List<ProjetoProduto> projetoProdutos = new ArrayList<>();
 
 		for (int i = 0; i < projetoDTO.getPesquisasId().size(); i++) {
+			LocalDate inicioEntrega = projetoDTO.getInicioEntrega().get(i);
+			LocalDate fimEntrega = projetoDTO.getFimEntrega().get(i);
 			Long pesquisaId = projetoDTO.getPesquisasId().get(i);
 			BigDecimal quantidade = projetoDTO.getQuantidade().get(i);
 			PesquisaDePreco pesquisa = pesquisaRepository.findById(pesquisaId)
@@ -82,7 +85,7 @@ public class ProjetoDeVendaService {
 					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
 
 			BigDecimal total = produto.getPrecoMedio().multiply(quantidade);
-			ProjetoProduto projetoProduto = new ProjetoProduto(produto, projeto, quantidade, total);
+			ProjetoProduto projetoProduto = new ProjetoProduto(produto, projeto, quantidade, total, inicioEntrega, fimEntrega);
 
 			projetoProdutos.add(projetoProduto);
 		}
@@ -212,7 +215,9 @@ public class ProjetoDeVendaService {
 	    novoProjetoProduto.setProduto(produto);
 	    novoProjetoProduto.setQuantidade(projetoProduto.getQuantidade());
 	    novoProjetoProduto.setTotal(total);
-	    novoProjetoProduto.setProjeto(projetoDeVenda);
+		novoProjetoProduto.setInicioEntrega(projetoProduto.getInicioEntrega());
+		novoProjetoProduto.setFimEntrega(projetoProduto.getFimEntrega());
+		novoProjetoProduto.setProjeto(projetoDeVenda);
 
 	    projetoDeVenda.getProjetoProdutos().add(novoProjetoProduto);
 	    for(ProjetoProduto p : projetoDeVenda.getProjetoProdutos()) {
@@ -233,7 +238,8 @@ public class ProjetoDeVendaService {
 	    pesquisaRepository.save(pesquisa);
 
 	    BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
-
+		projetoProdutoExistente.setInicioEntrega(projetoProdutoAtualizado.getInicioEntrega());
+		projetoProdutoExistente.setFimEntrega(projetoProdutoAtualizado.getFimEntrega());
 	    projetoProdutoExistente.setQuantidade(novaQuantidade);
 	    projetoProdutoExistente.setTotal(total);
 	    System.out.println("ProjetoProduto atualizado: " + projetoProdutoExistente.getId());

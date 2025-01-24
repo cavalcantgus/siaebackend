@@ -15,6 +15,8 @@ public class ProjetoDeVendaDTO {
 	
 	private Long produtorId;
 	private LocalDate dataProjeto;
+	private List<LocalDate> inicioEntrega;
+	private List<LocalDate> fimEntrega;
 	private List<Long> pesquisasId;
 	private List<BigDecimal> quantidade;
 }

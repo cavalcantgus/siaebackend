@@ -39,7 +39,7 @@ public class ProjetoDeVendaController {
 		
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PDF);
-		headers.setContentDispositionFormData("attachment", "relatorio.pdf");
+		headers.setContentDispositionFormData("attachment", projeto.getProdutor().getNome().toLowerCase() + ".pdf");
 		
 		return ResponseEntity.ok().headers(headers).body(pdfBytes);
 		

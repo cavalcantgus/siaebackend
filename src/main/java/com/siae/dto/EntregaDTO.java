@@ -15,5 +15,5 @@ public class EntregaDTO {
     private Long produtorId;
     private LocalDate dataEntrega;
     private List<Long> produtoIds;
-    private BigDecimal quantidade;
+    private List<BigDecimal> quantidade;
 }

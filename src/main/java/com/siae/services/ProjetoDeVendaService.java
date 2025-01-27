@@ -56,6 +56,10 @@ public class ProjetoDeVendaService {
 		return projeto.orElseThrow(() -> new EntityNotFoundException("Projeto não encontrado"));
 	}
 
+	public ProjetoDeVenda findByProdutorId(Long produtorId) {
+        return repository.findByProdutorId(produtorId);
+	}
+
 	public ProjetoDeVenda insert(ProjetoDeVendaDTO projetoDTO) {
 		Produtor produtor = produtorRepository.findById(projetoDTO.getProdutorId())
 				.orElseThrow(() -> new EntityNotFoundException("Produtor não encontrado"));

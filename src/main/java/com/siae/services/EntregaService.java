@@ -64,7 +64,6 @@ public class EntregaService {
         }
 
         List<DetalhesEntrega> detalhesEntregas = new ArrayList<>();
-        List<ProjetoProduto> projetoProdutos = new ArrayList<>();
 
         for(int i = 0; i < entregaDTO.getProdutoIds().size(); i++) {
             Produto produto = produtoService.findById(entregaDTO.getProdutoIds().get(i));
@@ -73,7 +72,6 @@ public class EntregaService {
             projetoProduto.ifPresent(pp -> {
                 pp.setQuantidade(pp.getQuantidade().subtract(entregaDTO.getQuantidade().get(finalI)));
                 pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-                projetoProdutos.add(pp);
             });
 
             // Inserir nova instância de DetalhesEntrega
@@ -91,8 +89,8 @@ public class EntregaService {
         entrega.setTotal(total);
         entrega.setQuantidade(quantidade);
 
-        projetoDeVenda.setTotal(projetoDeVenda.total(projetoProdutos));
-        projetoDeVenda.setQuantidadeTotal(projetoDeVenda.quantidadeTotal(projetoProdutos));
+        projetoDeVenda.setTotal(projetoDeVenda.getTotal().subtract(total));
+        projetoDeVenda.setQuantidadeTotal(projetoDeVenda.getQuantidadeTotal().subtract(quantidade));
 
         projetoDeVendaRepository.save(projetoDeVenda);
         detalhesEntregaRepository.saveAll(detalhesEntregas);

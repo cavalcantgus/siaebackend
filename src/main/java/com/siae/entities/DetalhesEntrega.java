@@ -1,5 +1,6 @@
 package com.siae.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ public class DetalhesEntrega {
 
     @ManyToOne
     @JoinColumn(name = "entrega_id")
+    @JsonBackReference
     private Entrega entrega;
 
     private BigDecimal total;

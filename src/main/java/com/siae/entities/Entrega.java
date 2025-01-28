@@ -1,6 +1,7 @@
 package com.siae.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -35,6 +36,7 @@ public class Entrega {
     private LocalDate dataDaEntrega;
 
     @OneToMany(mappedBy = "entrega")
+    @JsonManagedReference
     private List<DetalhesEntrega> detalhesEntrega;
 
     private BigDecimal total;

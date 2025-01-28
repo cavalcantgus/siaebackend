@@ -29,7 +29,7 @@ public class EntregaController {
         return ResponseEntity.ok().body(entregas);
     }
 
-    @PostMapping("/comprovante/{id}")
+    @PostMapping("/comprovante")
     public ResponseEntity<Entrega> insert(@RequestBody EntregaDTO entregaDTO) {
         Entrega entrega = entregaService.insert(entregaDTO);
 

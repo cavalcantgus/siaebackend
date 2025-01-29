@@ -89,9 +89,6 @@ public class EntregaService {
         entrega.setTotal(total);
         entrega.setQuantidade(quantidade);
 
-        projetoDeVenda.setTotal(projetoDeVenda.getTotal().subtract(total));
-        projetoDeVenda.setQuantidadeTotal(projetoDeVenda.getQuantidadeTotal().subtract(quantidade));
-
         projetoDeVendaRepository.save(projetoDeVenda);
         detalhesEntregaRepository.saveAll(detalhesEntregas);
         entrega.setDetalhesEntrega(detalhesEntregas);

@@ -2,6 +2,7 @@ package com.siae.controllers;
 
 import com.siae.dto.EntregaDTO;
 import com.siae.entities.Entrega;
+import com.siae.entities.ProjetoDeVenda;
 import com.siae.relatorios.ComprovanteDeRecebimento;
 import com.siae.services.EntregaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,5 +54,11 @@ public class EntregaController {
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(entrega.getId()).toUri();
         return ResponseEntity.created(uri).body(entrega);
+    }
+
+    @PutMapping("/comprovante/{id}")
+    public ResponseEntity<Entrega> update(@PathVariable Long id, @RequestBody Entrega obj) {
+        Entrega entrega = entregaService.update(id, obj);
+        return ResponseEntity.ok().body(entrega);
     }
 }

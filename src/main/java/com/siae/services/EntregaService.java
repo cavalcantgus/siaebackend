@@ -142,10 +142,15 @@ public class EntregaService {
     }
 
     private void handleMultipleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega, Boolean condicao) {
+        payloadEntrega.getDetalhesEntrega().forEach((d) -> {
+            System.out.println(d.getProduto().getDescricao());
+        });
+
         novaEntrega.getDetalhesEntrega().removeIf(detalhesEntregaAnt -> {
             boolean shouldRemove = payloadEntrega.getDetalhesEntrega().stream()
                     .noneMatch(detalhesEntrega -> detalhesEntrega.getId().equals(detalhesEntregaAnt.getId()));
 
+            System.out.println("Devo Remover: " + shouldRemove);
             if(shouldRemove){
                 if(condicao) {
                     devolverQuantidadeAoEstoque(detalhesEntregaAnt);
@@ -162,6 +167,7 @@ public class EntregaService {
             } else {
                 DetalhesEntrega detalhesEntregaExistente = detalhesEntregaRepository.findById(detalhesEntrega.getId())
                         .orElseThrow(() -> new EntityNotFoundException("Entrega não encontrada"));
+                atualizarEntregaExistente(detalhesEntregaExistente, detalhesEntrega);
             }
         });
     }

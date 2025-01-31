@@ -242,6 +242,7 @@ public class ProjetoDeVendaService {
 	    pesquisaRepository.save(pesquisa);
 
 	    BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
+		projetoProdutoExistente.setProduto(produto);
 		projetoProdutoExistente.setInicioEntrega(projetoProdutoAtualizado.getInicioEntrega());
 		projetoProdutoExistente.setFimEntrega(projetoProdutoAtualizado.getFimEntrega());
 	    projetoProdutoExistente.setQuantidade(novaQuantidade);

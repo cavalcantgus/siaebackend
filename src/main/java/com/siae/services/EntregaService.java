@@ -128,6 +128,8 @@ public class EntregaService {
 
         if(novaEntrega.getDetalhesEntrega().size() == 1 && payloadEntrega.getDetalhesEntrega().size() == 1){
             handleSingleDetalhesEntrega(payloadEntrega, novaEntrega, novaEntrega.getDetalhesEntrega().get(0), mesmoProdutor);
+        } else {
+            handleMultipleDetalhesEntrega(payloadEntrega, novaEntrega, mesmoProdutor);
         }
 
         BigDecimal quantidadeTotal = novaEntrega.quantidadeTotal(novaEntrega.getDetalhesEntrega());
@@ -137,6 +139,31 @@ public class EntregaService {
 
         detalhesEntregaRepository.saveAll(novaEntrega.getDetalhesEntrega());
         entregaRepository.save(novaEntrega);
+    }
+
+    private void handleMultipleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega, Boolean condicao) {
+        novaEntrega.getDetalhesEntrega().removeIf(detalhesEntregaAnt -> {
+            boolean shouldRemove = payloadEntrega.getDetalhesEntrega().stream()
+                    .noneMatch(detalhesEntrega -> detalhesEntrega.getId().equals(detalhesEntregaAnt.getId()));
+
+            if(shouldRemove){
+                if(condicao) {
+                    devolverQuantidadeAoEstoque(detalhesEntregaAnt);
+                }
+                detalhesEntregaRepository.delete(detalhesEntregaAnt);
+            }
+
+            return shouldRemove;
+        });
+
+        payloadEntrega.getDetalhesEntrega().forEach(detalhesEntrega -> {
+            if(detalhesEntrega.getId() == null) {
+                adicionarNovaEntrega(detalhesEntrega, novaEntrega);
+            } else {
+                DetalhesEntrega detalhesEntregaExistente = detalhesEntregaRepository.findById(detalhesEntrega.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Entrega não encontrada"));
+            }
+        });
     }
 
     private void handleNewProducer(Entrega payloadEntrega, Entrega novaEntrega) {

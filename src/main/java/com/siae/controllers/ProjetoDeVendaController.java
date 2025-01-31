@@ -44,6 +44,12 @@ public class ProjetoDeVendaController {
 		return ResponseEntity.ok().headers(headers).body(pdfBytes);
 		
 	}
+
+	@GetMapping("/projeto/{id}")
+	public ResponseEntity<ProjetoDeVenda> findByProdutorId(@PathVariable Long id) {
+		ProjetoDeVenda projeto = service.findByProdutorId(id);
+		return ResponseEntity.ok().body(projeto);
+	}
 	
 	@PostMapping("/projeto")
 	public ResponseEntity<ProjetoDeVenda> insert(@RequestBody ProjetoDeVendaDTO projetoDTO) {

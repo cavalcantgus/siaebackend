@@ -135,6 +135,12 @@ public class ProjetoDeVendaService {
 	        handleMultipleProjetoProdutos(projeto, projetoDeVenda, projetoProdutosExistentes);
 	    }
 
+		/*
+		projeto = payload
+		projetoDeVenda = antigo objeto vindo do banco de dados
+		projetoProdutosExistentes = lista de projeto produtos do projetoDeVenda
+		 */
+
 	    // Calcular total e quantidade
 	    BigDecimal quantidadeTotal = projetoDeVenda.quantidadeTotal(projetoDeVenda.getProjetoProdutos());
 	    BigDecimal total = projetoDeVenda.total(projetoDeVenda.getProjetoProdutos());
@@ -170,6 +176,12 @@ public class ProjetoDeVendaService {
 	}
 
 	private void handleMultipleProjetoProdutos(ProjetoDeVenda projeto, ProjetoDeVenda projetoDeVenda, List<ProjetoProduto> projetoProdutosExistentes) {
+		/*
+		projeto = payload
+		projetoDeVenda = antigo objeto vindo do banco de dados
+		projetoProdutosExistentes = lista de projeto produtos do projetoDeVenda
+		 */
+
 	    // Remover produtos que não estão mais no payload
 	    projetoProdutosExistentes.removeIf(projetoProdAnt -> {
 	        boolean shouldRemove = projeto.getProjetoProdutos().stream()
@@ -231,23 +243,47 @@ public class ProjetoDeVendaService {
 	}
 
 	private void atualizarProjetoProdutoExistente(ProjetoProduto projetoProdutoExistente, ProjetoProduto projetoProdutoAtualizado) {
-	    BigDecimal quantidadeAnterior = projetoProdutoExistente.getQuantidade();
-	    BigDecimal novaQuantidade = projetoProdutoAtualizado.getQuantidade();
 
-	    Produto produto = produtoRepository.findById(projetoProdutoExistente.getProduto().getId())
-	            .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
-	    PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
+		if(projetoProdutoExistente.getProduto().getId().equals(projetoProdutoAtualizado.getProduto().getId())) {
+			BigDecimal quantidadeAnterior = projetoProdutoExistente.getQuantidade();
+			BigDecimal novaQuantidade = projetoProdutoAtualizado.getQuantidade();
 
-	    pesquisa.setQuantidade(pesquisa.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
-	    pesquisaRepository.save(pesquisa);
+			Produto produto = produtoRepository.findById(projetoProdutoExistente.getProduto().getId())
+					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
+			PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
 
-	    BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
-		projetoProdutoExistente.setProduto(produto);
-		projetoProdutoExistente.setInicioEntrega(projetoProdutoAtualizado.getInicioEntrega());
-		projetoProdutoExistente.setFimEntrega(projetoProdutoAtualizado.getFimEntrega());
-	    projetoProdutoExistente.setQuantidade(novaQuantidade);
-	    projetoProdutoExistente.setTotal(total);
-	    System.out.println("ProjetoProduto atualizado: " + projetoProdutoExistente.getId());
+			pesquisa.setQuantidade(pesquisa.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
+			pesquisaRepository.save(pesquisa);
+
+			BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
+
+			projetoProdutoExistente.setInicioEntrega(projetoProdutoAtualizado.getInicioEntrega());
+			projetoProdutoExistente.setFimEntrega(projetoProdutoAtualizado.getFimEntrega());
+			projetoProdutoExistente.setQuantidade(novaQuantidade);
+			projetoProdutoExistente.setTotal(total);
+		} else {
+			devolverQuantidadeAoEstoque(projetoProdutoExistente);
+
+			Produto produto = produtoRepository.findById(projetoProdutoAtualizado.getProduto().getId())
+					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
+			PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
+
+			pesquisa.setQuantidade(pesquisa.getQuantidade().subtract(projetoProdutoAtualizado.getQuantidade()));
+
+			BigDecimal total = produto.getPrecoMedio().multiply(projetoProdutoAtualizado.getQuantidade());
+
+			projetoProdutoExistente.setProduto(produto);
+			projetoProdutoExistente.setQuantidade(projetoProdutoAtualizado.getQuantidade());
+			projetoProdutoExistente.setTotal(total);
+			projetoProdutoAtualizado.setInicioEntrega(projetoProdutoAtualizado.getInicioEntrega());
+			projetoProdutoAtualizado.setFimEntrega(projetoProdutoAtualizado.getFimEntrega());
+
+		}
+
+		/*
+		projetoProdutoExistente = projetoProduto antigo
+		projetoProdutoAtualizado = que veio do payload
+		 */
 	}
 
 

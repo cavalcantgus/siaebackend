@@ -5,13 +5,11 @@ import com.siae.entities.*;
 import com.siae.repositories.DetalhesEntregaRepository;
 import com.siae.repositories.EntregaRepository;
 import com.siae.repositories.ProjetoDeVendaRepository;
-import com.siae.repositories.ProjetoProdutoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +52,7 @@ public class EntregaService {
 
     public Entrega insert(EntregaDTO entregaDTO) {
         Produtor produtor = produtorService.findById(entregaDTO.getProdutorId());
-        ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(produtor.getId());
+
         Entrega entrega = new Entrega();
         entrega.setProdutor(produtor);
         entrega.setDataDaEntrega(entregaDTO.getDataEntrega());
@@ -68,12 +66,6 @@ public class EntregaService {
 
         for(int i = 0; i < entregaDTO.getProdutoIds().size(); i++) {
             Produto produto = produtoService.findById(entregaDTO.getProdutoIds().get(i));
-            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream().filter(projeto -> projeto.getProduto().getId().equals(produto.getId())).findFirst();
-            int finalI = i;
-            projetoProduto.ifPresent(pp -> {
-                pp.setQuantidade(pp.getQuantidade().subtract(entregaDTO.getQuantidade().get(finalI)));
-                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-            });
 
             // Inserir nova instância de DetalhesEntrega
             DetalhesEntrega detalhesEntrega = new DetalhesEntrega();
@@ -90,7 +82,7 @@ public class EntregaService {
         entrega.setTotal(total);
         entrega.setQuantidade(quantidade);
 
-        projetoDeVendaRepository.save(projetoDeVenda);
+
         detalhesEntregaRepository.saveAll(detalhesEntregas);
         entrega.setDetalhesEntrega(detalhesEntregas);
         return entrega;
@@ -120,16 +112,14 @@ public class EntregaService {
 
     @Transactional
     protected void updateData(Entrega payloadEntrega, Entrega novaEntrega) {
-        Boolean mesmoProdutor = payloadEntrega.getProdutor().getId().equals(novaEntrega.getProdutor().getId());
-
-        if(!payloadEntrega.getProdutor().getId().equals(novaEntrega.getProdutor().getId())){
-            handleNewProducer(payloadEntrega, novaEntrega);
-        }
+        Produtor produtor = produtorService.findById(payloadEntrega.getProdutor().getId());
+        novaEntrega.setProdutor(produtor);
+        novaEntrega.setDataDaEntrega(payloadEntrega.getDataDaEntrega());
 
         if(novaEntrega.getDetalhesEntrega().size() == 1 && payloadEntrega.getDetalhesEntrega().size() == 1){
-            handleSingleDetalhesEntrega(payloadEntrega, novaEntrega, novaEntrega.getDetalhesEntrega().get(0), mesmoProdutor);
+            handleSingleDetalhesEntrega(payloadEntrega, novaEntrega, novaEntrega.getDetalhesEntrega().get(0));
         } else {
-            handleMultipleDetalhesEntrega(payloadEntrega, novaEntrega, mesmoProdutor);
+            handleMultipleDetalhesEntrega(payloadEntrega, novaEntrega);
         }
 
         BigDecimal quantidadeTotal = novaEntrega.quantidadeTotal(novaEntrega.getDetalhesEntrega());
@@ -141,7 +131,7 @@ public class EntregaService {
         entregaRepository.save(novaEntrega);
     }
 
-    private void handleMultipleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega, Boolean condicao) {
+    private void handleMultipleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega) {
         payloadEntrega.getDetalhesEntrega().forEach((d) -> {
             System.out.println(d.getProduto().getDescricao());
         });
@@ -152,9 +142,6 @@ public class EntregaService {
 
             System.out.println("Devo Remover: " + shouldRemove);
             if(shouldRemove){
-                if(condicao) {
-                    devolverQuantidadeAoEstoque(detalhesEntregaAnt);
-                }
                 detalhesEntregaRepository.delete(detalhesEntregaAnt);
             }
 
@@ -172,39 +159,9 @@ public class EntregaService {
         });
     }
 
-    private void handleNewProducer(Entrega payloadEntrega, Entrega novaEntrega) {
-        // Buscando antigo produtor associado
-        Produtor produtorAnt = produtorService.findById(novaEntrega.getProdutor().getId());
-
-        // Buscando projeto de venda associado ao antigo produtor
-        ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(produtorAnt.getId());
-
-        // Devolvendo valores e quantidades aos ProjetoProdutos associados ao antigo Produtor
-        novaEntrega.getDetalhesEntrega().forEach(entrega -> {
-            Produto produto = produtoService.findById(entrega.getProduto().getId());
-            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
-                    .filter(p -> p.getProduto().getId().equals(produto.getId())).findFirst();
-
-            projetoProduto.ifPresent(pp -> {
-                pp.setQuantidade(pp.getQuantidade().add(entrega.getQuantidade()));
-                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-            });
-        });
-
-        // Novo Produtor vindo do payload
-        Produtor novoProdutor = produtorService.findById(payloadEntrega.getProdutor().getId());
-
-        projetoDeVendaRepository.save(projetoDeVenda);
-        novaEntrega.setProdutor(novoProdutor);
-    }
-
-    private void handleSingleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega, DetalhesEntrega detalhesEntrega, Boolean condicao) {
+    private void handleSingleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega, DetalhesEntrega detalhesEntrega) {
         payloadEntrega.getDetalhesEntrega().forEach(entrega -> {
             if(!entrega.getProduto().getId().equals(detalhesEntrega.getProduto().getId())){
-
-                if(condicao) {
-                    devolverQuantidadeAoEstoque(detalhesEntrega);
-                }
 
                 detalhesEntregaRepository.delete(detalhesEntrega);
 
@@ -216,42 +173,48 @@ public class EntregaService {
         });
     }
 
-    private void devolverQuantidadeAoEstoque(DetalhesEntrega detalhesEntrega) {
-        Produto produto = produtoService.findById(detalhesEntrega.getProduto().getId());
-        Long produtorId = detalhesEntrega.getProduto().getId();
-        ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(produtorId);
-
-        Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
-                .filter(p -> p.getProduto().getId().equals(produto.getId()))
-                .findFirst();
-
-        projetoProduto.ifPresent(pp -> {
-            pp.setQuantidade(pp.getQuantidade().add(detalhesEntrega.getQuantidade()));
-            pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-        });
-    }
 
     private void atualizarEntregaExistente(DetalhesEntrega detalhesEntrega, DetalhesEntrega entrega) {
-        BigDecimal quantidadeAnterior = detalhesEntrega.getQuantidade();
-        BigDecimal novaQuantidade = entrega.getQuantidade();
-        Long produtorId = detalhesEntrega.getEntrega().getProdutor().getId();
+        if(detalhesEntrega.getProduto().getId().equals(entrega.getProduto().getId())) {
+            BigDecimal quantidadeAnterior = detalhesEntrega.getQuantidade();
+            BigDecimal novaQuantidade = entrega.getQuantidade();
+            Long produtorId = detalhesEntrega.getEntrega().getProdutor().getId();
 
-        Produto produto = produtoService.findById(detalhesEntrega.getProduto().getId());
-        ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(produtorId);
+            Produto produto = produtoService.findById(detalhesEntrega.getProduto().getId());
+            ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(produtorId);
 
-        Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
-                .filter(p -> p.getProduto().getId().equals(produto.getId()))
-                .findFirst();
+            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
+                    .filter(p -> p.getProduto().getId().equals(produto.getId()))
+                    .findFirst();
 
-        projetoProduto.ifPresent(pp -> {
-            pp.setQuantidade(pp.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
-            pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-        });
+            projetoProduto.ifPresent(pp -> {
+                pp.setQuantidade(pp.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
+                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
+            });
 
-        BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
-        detalhesEntrega.setQuantidade(novaQuantidade);
-        detalhesEntrega.setProduto(produto);
-        detalhesEntrega.setTotal(total);
+            BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
+            detalhesEntrega.setQuantidade(novaQuantidade);
+            detalhesEntrega.setProduto(produto);
+            detalhesEntrega.setTotal(total);
+        }  else {
+            Produto produto = produtoService.findById(entrega.getProduto().getId());
+
+            ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(entrega.getEntrega().getProdutor().getId());
+
+            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
+                    .filter(p -> p.getProduto().getId().equals(produto.getId()))
+                    .findFirst();
+
+            projetoProduto.ifPresent(pp -> {
+                pp.setQuantidade(pp.getQuantidade().subtract(entrega.getQuantidade()));
+                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
+            });
+
+            BigDecimal total = produto.getPrecoMedio().multiply(entrega.getQuantidade());
+            detalhesEntrega.setTotal(total);
+            detalhesEntrega.setProduto(produto);
+            detalhesEntrega.setQuantidade(entrega.getQuantidade());
+        }
     }
 
     private void adicionarNovaEntrega(DetalhesEntrega entrega, Entrega novaEntrega) {

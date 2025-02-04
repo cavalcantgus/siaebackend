@@ -1,13 +1,15 @@
 package com.siae.relatorios;
 
+import java.awt.*;
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
-import com.siae.entities.DetalhesEntrega;
-import com.siae.entities.Entrega;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.siae.entities.*;
 import org.springframework.stereotype.Service;
 
 import com.itextpdf.io.source.ByteArrayOutputStream;
@@ -22,11 +24,12 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
-import com.siae.entities.ProjetoDeVenda;
-import com.siae.entities.ProjetoProduto;
 
 @Service
 public class EntregaMensal {
+
+    DeviceRgb customTotalColor = new DeviceRgb(255, 215, 0);
+    DeviceRgb customGray = new DeviceRgb(169, 169, 169);
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM yyyy", new Locale("pt", "BR"));
     DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM", new Locale("pt", "BR"));
@@ -40,9 +43,24 @@ public class EntregaMensal {
     public byte[] createPdf(List<Entrega> entregas, String mes, String ano) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        List<Entrega> entregasFiltradas = entregas.stream()
+        List<Entrega> entregasFiltradas = new ArrayList<>(entregas.stream()
                 .filter((entrega -> entrega.getDataDaEntrega().format(monthNumberFormat).equals(mes) && entrega.getDataDaEntrega().format(yearNumberFormat).equals(ano)))
-                .toList();
+                .toList());
+
+        Map<Produtor, List<DetalhesEntrega>> entregasPorProd = new HashMap<>();
+
+        for (Entrega entrega : entregasFiltradas) {
+            Produtor produtor = entrega.getProdutor();
+            List<DetalhesEntrega> detalhesEntregas = entrega.getDetalhesEntrega();
+
+            entregasPorProd
+                    .computeIfAbsent(produtor, k -> new ArrayList<>())
+                    .addAll(detalhesEntregas);
+        }
+
+        entregasFiltradas.sort((entrega1, entrega2) -> {
+            return entrega1.getProdutor().getNome().compareToIgnoreCase(entrega2.getProdutor().getNome());
+        });
 
         try {
             PdfWriter writer = new PdfWriter(baos);
@@ -57,11 +75,15 @@ public class EntregaMensal {
             addMainHeader(document, "Secretaria Municipal de Agricultura", 0, regularFont);
             addMainHeader(document, "Departamento de Alimentação Escolar-DAE", 0, regularFont);
             addMainHeader(document, "RELATORIO AGRICULTURA FAMILIAR", 0, regularFont);
-            addMainHeader(document, "RELATORIO AGRICULTURA FAMILIAR", 0, regularFont);
 
-            addParagraph(document, "MÊS :", regularFont);
+            addMainHeader(document, "MÊS: " + entregas.get(0).getDataDaEntrega().format(monthFormatter).toUpperCase(), 10, regularFont);
 
-            addTable(document, entregasFiltradas);
+            for (Map.Entry<Produtor, List<DetalhesEntrega>> entry : entregasPorProd.entrySet()) {
+                Produtor produtor = entry.getKey();
+                List<DetalhesEntrega> detalhesEntregas = entry.getValue();
+                addTable(document, produtor, detalhesEntregas);
+                addTotalTable(document, detalhesEntregas);
+            }
 
 //            addFooter(document, entregas);
 
@@ -99,41 +121,68 @@ public class EntregaMensal {
 //
 //    }
 
-    private void addTable(Document document, List<Entrega> entregasFiltradas) {
-        if(entregasFiltradas.isEmpty()) {
-            throw new RuntimeException();
-        }
-        float[] columnWidthsEntrega = {1, 1, 1, 1, 1, 1, 1};
-        Table tableEntrega = new Table(columnWidthsEntrega);
-        tableEntrega.addHeaderCell(createdStyledCell("PRODUTOR", boldFont));
-        tableEntrega.addHeaderCell(createdStyledCell("PRODUTO", boldFont));
-        tableEntrega.addHeaderCell(createdStyledCell("UND", boldFont));
-        tableEntrega.addHeaderCell(createdStyledCell("QTD", boldFont));
-        tableEntrega.addHeaderCell(createdStyledCell("R$ / UNT", boldFont));
-        tableEntrega.addHeaderCell(createdStyledCell("TOTAL", boldFont));
-        tableEntrega.addHeaderCell(createdStyledCell("TOTAL / PRODUTOR", boldFont));
+    private void addTotalTable(Document document, List<DetalhesEntrega> detalhesEntregas) {
+        UnitValue[] columnWidthsTotalGeral = {UnitValue.createPercentValue(83.33f),
+                UnitValue.createPercentValue(16.66f)};
 
-        for (Entrega e : entregasFiltradas) {   
-            for (DetalhesEntrega d : e.getDetalhesEntrega()) {
-                tableEntrega.addCell(createdStyledCell(e.getProdutor().getNome(), regularFont));
-                tableEntrega.addCell(createdStyledCell(d.getProduto().getDescricao(), regularFont));
-                tableEntrega.addCell(createdStyledCell(d.getProduto().getUnidade(), regularFont));
-                tableEntrega.addCell(createdStyledCell(d.getQuantidade().toString(), regularFont));
-                tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(d.getProduto().getPrecoMedio()), regularFont));
-                tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(d.getTotal()), regularFont));
-                tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(e.getTotal()), regularFont));
-                tableEntrega.setWidth(UnitValue.createPercentValue(100));
+        Table tableTotal = new Table(columnWidthsTotalGeral);
+        BigDecimal total = detalhesEntregas.stream()
+                .map(DetalhesEntrega::getTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        tableTotal.addCell(createdStyledHeader("TOTAL / PRODUTOR", boldFont, customTotalColor));
+        tableTotal.addCell(createdStyledCell("R" + currencyBr.format(total), regularFont));
+
+        tableTotal.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
+        tableTotal.setKeepTogether(true);  // Garante que a tabela não seja dividida em várias páginas
+
+        document.add(tableTotal);
+    }
+
+    private void addTable(Document document, Produtor produtor, List<DetalhesEntrega> detalhesEntregas) {
+        // Definindo as larguras das colunas para ocupar 100% da página
+        UnitValue[] columnWidthsEntrega = {UnitValue.createPercentValue(16.66f),
+                UnitValue.createPercentValue(16.66f),
+                UnitValue.createPercentValue(16.66f),
+                UnitValue.createPercentValue(16.66f),
+                UnitValue.createPercentValue(16.66f),
+                UnitValue.createPercentValue(16.66f)};
+
+        Table tableEntrega = new Table(columnWidthsEntrega);
+        tableEntrega.addHeaderCell(createdStyledHeader("PRODUTOR", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("PRODUTO", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("UND", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("QTD", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("R$ / UNT", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("TOTAL", boldFont, customGray ));
+
+        boolean isFirstLine = true;
+
+        // Itera pelos detalhes de entrega associados a este produtor
+        for (DetalhesEntrega d : detalhesEntregas) {
+            // Na primeira linha de cada grupo, adiciona o nome do produtor
+            if (isFirstLine) {
+                tableEntrega.addCell(createdStyledCell(produtor.getNome(), regularFont).setBorderBottom(null));
+                isFirstLine = false; // Marca que não é mais a primeira linha
+            } else {
+                // Para as linhas seguintes, adiciona uma célula vazia na coluna do nome do produtor
+                tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
             }
 
+            // Adiciona os detalhes do produto
+            tableEntrega.addCell(createdStyledCell(d.getProduto().getDescricao(), regularFont));
+            tableEntrega.addCell(createdStyledCell(d.getProduto().getUnidade(), regularFont));
+            tableEntrega.addCell(createdStyledCell(d.getQuantidade().toString(), regularFont));
+            tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(d.getProduto().getPrecoMedio()), regularFont));
+            tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(d.getTotal()), regularFont));
         }
 
-
-
-        tableEntrega.setKeepTogether(true);
+        tableEntrega.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
+        tableEntrega.setKeepTogether(true);  // Garante que a tabela não seja dividida em várias páginas
 
         document.add(tableEntrega);
-
     }
+
 
     private Cell createdStyledCell(String content, PdfFont font) {
         return new Cell().add(new Paragraph(content))
@@ -143,9 +192,9 @@ public class EntregaMensal {
                 .setTextAlignment(TextAlignment.LEFT);
     }
 
-    private Cell createdStyledHeader(String content, PdfFont font) {
+    private Cell createdStyledHeader(String content, PdfFont font, DeviceRgb color) {
         return new Cell().add(new Paragraph(content))
-                .setBackgroundColor(ColorConstants.CYAN)
+                .setBackgroundColor(color)
                 .setFont(font)
                 .setFontSize(10)
                 .setTextAlignment(TextAlignment.LEFT);

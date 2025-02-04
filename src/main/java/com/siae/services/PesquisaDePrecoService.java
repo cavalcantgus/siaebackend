@@ -84,7 +84,7 @@ public class PesquisaDePrecoService {
 	    Produto produto = produtoService.findById(pesquisa.getProduto().getId());
 	    pesquisaDePreco.setProduto(produto);
 	    pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
-
+		pesquisaDePreco.setQuantidade(pesquisa.getQuantidade());
 	    // Atualizar preços sem substituir diretamente a coleção
 	    List<Preco> precosExistentes = pesquisaDePreco.getPrecos();
 	    precosExistentes.clear(); // Limpa a lista existente

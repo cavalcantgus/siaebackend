@@ -52,6 +52,12 @@ public class EntregaController {
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 
+    @GetMapping("/comprovante/{produtorId}")
+    public ResponseEntity<List<Entrega>> findByProdutorId(@PathVariable Long produtorId) {
+        List<Entrega> entregas = entregaService.findByProdutorId(produtorId);
+        return ResponseEntity.ok().body(entregas);
+    }
+
     @GetMapping("relatorio/mensal/generate/{mes}/{ano}")
     public ResponseEntity<?> generateRelatorioMensalPdf(@PathVariable String mes, @PathVariable String ano) {
         List<Entrega> entregas = entregaService.findAll();

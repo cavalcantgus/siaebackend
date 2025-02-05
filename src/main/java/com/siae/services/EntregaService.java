@@ -50,6 +50,10 @@ public class EntregaService {
         return entrega.orElseThrow(() -> new EntityNotFoundException("Comprovante de Entrega não encontrado"));
     }
 
+    public List<Entrega> findByProdutorId(Long id) {
+        return entregaRepository.findByProdutorId(id);
+    }
+
     public Entrega insert(EntregaDTO entregaDTO) {
         Produtor produtor = produtorService.findById(entregaDTO.getProdutorId());
 

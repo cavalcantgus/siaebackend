@@ -44,7 +44,7 @@ public class ProjetoDeVenda {
 	private LocalDate dataProjeto;
 	
 	@ManyToOne
-    @JoinColumn(name = "produtor_id", nullable = false)
+    @JoinColumn(name = "produtor_id", nullable = false, unique = true)
     private Produtor produtor;
 
 	@OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)

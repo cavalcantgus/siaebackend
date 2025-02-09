@@ -2,6 +2,7 @@ package com.siae.relatorios;
 
 import java.awt.*;
 import java.math.BigDecimal;
+import java.text.Collator;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -47,34 +48,44 @@ public class EntregaMensal {
                 .filter((entrega -> entrega.getDataDaEntrega().format(monthNumberFormat).equals(mes) && entrega.getDataDaEntrega().format(yearNumberFormat).equals(ano)))
                 .toList());
 
-        Map<Produtor, List<DetalhesEntrega>> entregasPorProd = new HashMap<>();
+        entregasFiltradas.sort((entrega1, entrega2) -> {
+            Collator collator = Collator.getInstance(new Locale("pt", "BR"));
+            return collator.compare(entrega1.getProdutor().getNome(), entrega2.getProdutor().getNome());
+        });
 
+        entregasFiltradas.forEach(entrega -> {
+            System.out.println(entrega.getDataDaEntrega() + " - " + entrega.getProdutor().getNome());
+        });
+
+        Map<Produtor, List<DetalhesEntrega>> entregasPorProd = new HashMap<>();
+        BigDecimal totalGeral = BigDecimal.valueOf(0);
         for (Entrega entrega : entregasFiltradas) {
             Produtor produtor = entrega.getProdutor();
             List<DetalhesEntrega> detalhesEntregas = entrega.getDetalhesEntrega();
+
+            BigDecimal total = detalhesEntregas.stream()
+                    .map(DetalhesEntrega::getTotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            totalGeral = totalGeral.add(total);
 
             entregasPorProd
                     .computeIfAbsent(produtor, k -> new ArrayList<>())
                     .addAll(detalhesEntregas);
         }
 
-        entregasFiltradas.sort((entrega1, entrega2) -> {
-            return entrega1.getProdutor().getNome().compareToIgnoreCase(entrega2.getProdutor().getNome());
-        });
-
         try {
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
 
-            regularFont = PdfFontFactory.createFont("fonts/static/Roboto-Regular.ttf", "Identity-H");
-            boldFont = PdfFontFactory.createFont("fonts/static/Roboto-Bold.ttf", "Identity-H");
+            regularFont = PdfFontFactory.createFont("basic_fonts/static/Lora-Regular.ttf", "Identity-H");
+            boldFont = PdfFontFactory.createFont("basic_fonts/static/Lora-Bold.ttf", "Identity-H");
 
-            addMainHeader(document, "Prefeitura Municipal de Colinas", 0, regularFont);
-            addMainHeader(document, "Secretaria Municipal de Educação", 0, regularFont);
-            addMainHeader(document, "Secretaria Municipal de Agricultura", 0, regularFont);
-            addMainHeader(document, "Departamento de Alimentação Escolar-DAE", 0, regularFont);
-            addMainHeader(document, "RELATORIO AGRICULTURA FAMILIAR", 0, regularFont);
+            addMainHeader(document, "Prefeitura Municipal de Colinas", -5, regularFont);
+            addMainHeader(document, "Secretaria Municipal de Educação", -5, regularFont);
+            addMainHeader(document, "Secretaria Municipal de Agricultura", -5, regularFont);
+            addMainHeader(document, "Departamento de Alimentação Escolar-DAE", -5, regularFont);
+            addMainHeader(document, "RELATORIO AGRICULTURA FAMILIAR", -5, regularFont);
 
             addMainHeader(document, "MÊS: " + entregas.get(0).getDataDaEntrega().format(monthFormatter).toUpperCase(), 10, regularFont);
 
@@ -83,9 +94,12 @@ public class EntregaMensal {
                 List<DetalhesEntrega> detalhesEntregas = entry.getValue();
                 addTable(document, produtor, detalhesEntregas);
                 addTotalTable(document, detalhesEntregas);
-            }
 
-//            addFooter(document, entregas);
+            }
+            addParagraph(document, "", regularFont);
+            addTotalGeral(document, totalGeral);
+
+            addFooter(document);
 
             document.close();
         } catch (Exception e) {
@@ -94,32 +108,36 @@ public class EntregaMensal {
         return baos.toByteArray();
     }
 
-//    private void addFooter(Document document, ProjetoDeVenda projeto) {
-//        Paragraph footer = new Paragraph("COLINAS (MA), " + projeto.getDataProjeto().format(formatter).toUpperCase())
-//                .setTextAlignment(TextAlignment.CENTER)
-//                .setFontSize(10)
-//                .setFixedPosition(40, 120, UnitValue.createPercentValue(100));
-//        document.add(footer);
-//
-//        Paragraph assign = new Paragraph("___________________________________________")
-//                .setTextAlignment(TextAlignment.CENTER)
-//                .setFontSize(10)
-//                .setFixedPosition(40, 90, UnitValue.createPercentValue(100));
-//        document.add(assign);
-//
-//        Paragraph name = new Paragraph(projeto.getProdutor().getNome())
-//                .setTextAlignment(TextAlignment.CENTER)
-//                .setFontSize(10)
-//                .setFixedPosition(40, 70, UnitValue.createPercentValue(100));
-//        document.add(name);
-//
-//        Paragraph cpf = new Paragraph("CPF Nº " + projeto.getProdutor().getCpf())
-//                .setTextAlignment(TextAlignment.CENTER)
-//                .setFontSize(10)
-//                .setFixedPosition(40, 50, UnitValue.createPercentValue(100));
-//        document.add(cpf);
-//
-//    }
+    private void addFooter(Document document) {
+
+        Paragraph text = new Paragraph("___________________________________________")
+                .setTextAlignment(TextAlignment.CENTER)
+                .setFontSize(10)
+                .setFixedPosition(40, 180, UnitValue.createPercentValue(100));
+        document.add(text);
+
+        Paragraph signature = new Paragraph("ASSINATURA")
+                .setTextAlignment(TextAlignment.CENTER)
+                .setFontSize(10)
+                .setFixedPosition(40, 140, UnitValue.createPercentValue(100));
+        document.add(signature);
+
+    }
+
+    private void addTotalGeral(Document document, BigDecimal totalGeral) {
+        UnitValue[] columnWidthsTotalGeral = {UnitValue.createPercentValue(83.33f),
+                UnitValue.createPercentValue(16.66f)};
+
+        Table tableTotalGeral = new Table(columnWidthsTotalGeral);
+
+        tableTotalGeral.addCell(createdStyledHeader("TOTAL GERAL", boldFont, customTotalColor));
+        tableTotalGeral.addCell(createdStyledCell("R" + currencyBr.format(totalGeral), regularFont));
+
+        tableTotalGeral.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
+        tableTotalGeral.setKeepTogether(true);  // Garante que a tabela não seja dividida em várias páginas
+
+        document.add(tableTotalGeral);
+    }
 
     private void addTotalTable(Document document, List<DetalhesEntrega> detalhesEntregas) {
         UnitValue[] columnWidthsTotalGeral = {UnitValue.createPercentValue(83.33f),

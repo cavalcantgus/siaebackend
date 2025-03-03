@@ -58,7 +58,7 @@ public class ContratoService {
 
         contratoTarget.setProdutor(produtor);
         contratoTarget.setContratante(contrato.getContratante());
-        contratoTarget.setCpfContratante(contrato.getCpfContratante());
+        contratoTarget.setContratante(contrato.getContratante());
         contratoTarget.setDataContratacao(contrato.getDataContratacao());
     }
 }

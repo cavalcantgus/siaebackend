@@ -165,8 +165,12 @@ public class ContratoPDF {
                     .add(new Text("Órgão de Administração Pública em Geral, inscrita no C.N.P.J. (MF) sob o nº 06.113.682/001-25, com sede à " +
                             "Praça Dias Carneiro, 402, Centro, representada neste ato pela Secretaria Municipal de Educação, a Sra. ")
                             .setFont(regularFont)).setTextAlignment(justified).setFontSize(10) // Texto normal
-                    .add(new Text(contrato.getContratante()).setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Nome do contratante em negrito
-                    .add(new Text(", inscrita no CPF sob n.º " + contrato.getCpfContratante() + ", doravante denominada CONTRATANTE, e, por outro lado, ")
+                    .add(new Text(contrato.getContratante().getNome()).setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Nome do contratante em negrito
+                    .add(new Text(", inscrita no CPF sob n.º " + contrato.getContratante().getCpf() +
+                            "," +
+                            " " +
+                            "doravante" +
+                            " denominada CONTRATANTE, e, por outro lado, ")
                             .setFont(regularFont)).setTextAlignment(justified).setFontSize(10)
                     .add(new Text(contrato.getProdutor().getNome()).setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Nome do fornecedor em negrito
                     .add(new Text(", fornecedor individual, situado à " + contrato.getProdutor().getEndereco() + ", " +
@@ -299,7 +303,7 @@ public class ContratoPDF {
                 .add(new Text("CONTRATANTE (S) ")
                         .setFont(boldFont)).setTextAlignment(center).setFontSize(10) // Deixa essa
                 // parte em negrito
-                .add(new Text(contrato.getContratante())
+                .add(new Text(contrato.getContratante().getNome())
                         .setFont(regularFont)).setTextAlignment(center).setFontSize(10);
         document.add(contratante);
 
@@ -308,7 +312,7 @@ public class ContratoPDF {
                         .setFont(regularFont)).setTextAlignment(center).setFontSize(10).setMarginTop(-6) //
                 // Deixa essa
                 // parte em negrito
-                .add(new Text(contrato.getCpfContratante())
+                .add(new Text(contrato.getContratante().getCpf())
                         .setFont(boldFont)).setTextAlignment(center).setFontSize(10).setMarginTop(-6);
         document.add(contratanteCpf);
 

@@ -26,8 +26,10 @@ public class Contrato {
     @ManyToOne
     @JoinColumn(name = "produtor_id")
     private Produtor produtor;
-    private String contratante;
-    private String cpfContratante;
+
+    @ManyToOne()
+    @JoinColumn(name = "contratante_id")
+    private Contratante contratante;
 
     @Temporal(TemporalType.DATE)
     @JsonDeserialize(using = LocalDateDeserializer.class)

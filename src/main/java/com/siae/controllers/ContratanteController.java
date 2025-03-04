@@ -3,10 +3,7 @@ package com.siae.controllers;
 import com.siae.entities.Contratante;
 import com.siae.services.ContratanteService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -35,7 +32,7 @@ public class ContratanteController {
     }
 
     @PostMapping("/contratante")
-    public  ResponseEntity<Contratante> insert(Contratante obj) {
+    public  ResponseEntity<Contratante> insert(@RequestBody Contratante obj) {
         Contratante contratante = contratanteService.insert(obj);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(contratante.getId()).toUri();

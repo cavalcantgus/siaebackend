@@ -3,7 +3,12 @@ package com.siae.controllers;
 import java.net.URI;
 import java.util.List;
 
+import com.siae.entities.Produtor;
+import com.siae.relatorios.ProdutoresPDF;
+import com.siae.relatorios.ProdutosPDF;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,11 +29,27 @@ public class ProdutoController {
 	
 	@Autowired
 	private ProdutoService service;
+
+	@Autowired
+	private ProdutosPDF pdfService;
 	
 	@GetMapping
 	public ResponseEntity<List<Produto>> findAll() {
 		List<Produto> produtos = service.findAll();
 		return ResponseEntity.ok().body(produtos);
+	}
+
+	@GetMapping("/relatorio/generate")
+	public ResponseEntity<?> generatePdf() {
+		List<Produto> produtos = service.findAll();
+		byte[] pdfBytes = pdfService.createPdf(produtos);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_PDF);
+		headers.setContentDispositionFormData("attachment", "relacao_produtos.pdf");
+
+		return ResponseEntity.ok().headers(headers).body(pdfBytes);
+
 	}
 	
 	// GetMapping("/{id}")

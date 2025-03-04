@@ -43,7 +43,7 @@ public class ProdutorController {
     	return ResponseEntity.ok().body(produtores);
     }
 
-    @GetMapping("/relatorio/generate/{id}")
+    @GetMapping("/relatorio/generate")
     public ResponseEntity<?> generatePdf() {
         List<Produtor> produtores = service.findAll();
         byte[] pdfBytes = pdfService.createPdf(produtores);

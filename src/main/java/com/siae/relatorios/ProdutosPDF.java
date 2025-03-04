@@ -12,9 +12,9 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import com.siae.entities.Produto;
 import com.siae.entities.Produtor;
 import com.siae.entities.ProjetoDeVenda;
-import com.siae.entities.ProjetoProduto;
 import org.springframework.stereotype.Service;
 
 import java.text.NumberFormat;
@@ -23,14 +23,14 @@ import java.util.List;
 import java.util.Locale;
 
 @Service
-public class ProdutoresPDF {
+public class ProdutosPDF {
 	
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM yyyy", new Locale("pt", "BR"));
 	DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM", new Locale("pt", "BR"));
 	PdfFont regularFont;
     PdfFont boldFont;
 	NumberFormat currencyBr = NumberFormat.getCurrencyInstance();
-	public byte[] createPdf(List<Produtor> produtores) {
+	public byte[] createPdf(List<Produto> produtos) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		
 		try {
@@ -42,10 +42,10 @@ public class ProdutoresPDF {
 			boldFont = PdfFontFactory.createFont("fonts/static/Roboto-Bold.ttf", "Identity-H");
 			
 
-			addMainHeader(document, "Relação de Produtores", 0, regularFont);
+			addMainHeader(document, "Relação de Produtos", 0, regularFont);
 
 
-			addTable(document, produtores);
+			addTable(document, produtos);
 			
 			document.close();
 		} catch (Exception e) {
@@ -81,32 +81,31 @@ public class ProdutoresPDF {
 		
 	}
 
-	private void addTable(Document document, List<Produtor> produtores) {
+	private void addTable(Document document, List<Produto> produtos) {
 		int count = 1;
-		float[] columnWidthsProdutores = {1, 1, 1};
+		float[] columnWidthsProdutos = {1, 1, 1, 1};
 
 		
-		Table tableProdutor = new Table(columnWidthsProdutores);
-		tableProdutor.addHeaderCell(createdStyledHeader("N°", boldFont));
-		tableProdutor.addHeaderCell(createdStyledHeader("NOME", boldFont));
-		tableProdutor.addHeaderCell(createdStyledHeader("CPF", boldFont));
-		tableProdutor.addHeaderCell(createdStyledHeader("CAF", boldFont));
+		Table tableProdutos = new Table(columnWidthsProdutos);
+		tableProdutos.addHeaderCell(createdStyledHeader("N°", boldFont));
+		tableProdutos.addHeaderCell(createdStyledHeader("DESCRIÇÃO", boldFont));
+		tableProdutos.addHeaderCell(createdStyledHeader("ESPECIFICAÇÂO", boldFont));
+		tableProdutos.addHeaderCell(createdStyledHeader("UNIDADE", boldFont));
+		tableProdutos.addHeaderCell(createdStyledHeader("PREÇO MÉDIO", boldFont));
 
-
-		for(Produtor p : produtores) {
-			tableProdutor.addCell(createdStyledCell(String.valueOf(count), regularFont));
-			tableProdutor.addCell(createdStyledCell(p.getNome(), regularFont));
-			tableProdutor.addCell(createdStyledCell(p.getCpf(), regularFont));
-			tableProdutor.addCell(createdStyledCell(p.getCaf(), regularFont));
-			tableProdutor.setWidth(UnitValue.createPercentValue(100));
+		for(Produto p : produtos) {
+			tableProdutos.addCell(createdStyledCell(String.valueOf(count), regularFont));
+			tableProdutos.addCell(createdStyledCell(p.getDescricao(), regularFont));
+			tableProdutos.addCell(createdStyledCell(p.getEspecificacao(), regularFont));
+			tableProdutos.addCell(createdStyledCell(p.getUnidade(), regularFont));
+			tableProdutos.addCell(createdStyledCell("R" + currencyBr.format(p.getPrecoMedio()), regularFont));
+			tableProdutos.setWidth(UnitValue.createPercentValue(100));
 			count++;
 		}
-		
 
+		tableProdutos.setKeepTogether(true);
 
-		tableProdutor.setKeepTogether(true);
-
-		document.add(tableProdutor);
+		document.add(tableProdutos);
 	}
 
 	private Cell createdStyledCell(String content, PdfFont font) {

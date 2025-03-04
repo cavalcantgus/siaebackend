@@ -83,7 +83,7 @@ public class ProdutosPDF {
 
 	private void addTable(Document document, List<Produto> produtos) {
 		int count = 1;
-		float[] columnWidthsProdutos = {0.5f, 2.5f, 2.5f, 2.5f, 2,5f};;
+		float[] columnWidthsProdutos = {0.5f, 2.5f, 3.0f, 2.5f, 2.5f};;
 
 		
 		Table tableProdutos = new Table(columnWidthsProdutos);
@@ -99,10 +99,9 @@ public class ProdutosPDF {
 			tableProdutos.addCell(createdStyledCell(p.getEspecificacao(), regularFont));
 			tableProdutos.addCell(createdStyledCell(p.getUnidade(), regularFont));
 			tableProdutos.addCell(createdStyledCell("R" + currencyBr.format(p.getPrecoMedio()), regularFont));
-			tableProdutos.setWidth(UnitValue.createPercentValue(100));
 			count++;
 		}
-
+		tableProdutos.setWidth(UnitValue.createPercentValue(100));
 		tableProdutos.setKeepTogether(true);
 
 		document.add(tableProdutos);

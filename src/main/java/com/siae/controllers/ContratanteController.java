@@ -39,4 +39,10 @@ public class ContratanteController {
 
         return ResponseEntity.created(uri).body(contratante);
     }
+
+    @PutMapping("/contratante/{id}")
+    public ResponseEntity<Contratante> update(@PathVariable Long id, @RequestBody Contratante obj) {
+        Contratante contratante = contratanteService.update(id, obj);
+        return ResponseEntity.ok().body(contratante);
+    }
 }

@@ -30,4 +30,25 @@ public class ContratanteService {
     public Contratante insert(Contratante contratante) {
         return contratanteRepository.save(contratante);
     }
+
+    public Contratante update(Long id, Contratante contratante) {
+        try {
+            if(contratanteRepository.existsById(id)) {
+                Contratante contratanteTarget = contratanteRepository.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Contratante não encontrado"));
+                updateData(contratante, contratanteTarget);
+                return contratanteRepository.save(contratanteTarget);
+            } else {
+                throw new EntityNotFoundException("Contratante não encontrado");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void updateData(Contratante contratante, Contratante contratanteTarget) {
+        contratanteTarget.setNome(contratanteTarget.getNome());
+        contratanteTarget.setCpf(contratanteTarget.getCpf());
+    }
 }

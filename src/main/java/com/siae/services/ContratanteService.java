@@ -48,7 +48,7 @@ public class ContratanteService {
     }
 
     private void updateData(Contratante contratante, Contratante contratanteTarget) {
-        contratanteTarget.setNome(contratanteTarget.getNome());
-        contratanteTarget.setCpf(contratanteTarget.getCpf());
+        contratanteTarget.setNome(contratante.getNome());
+        contratanteTarget.setCpf(contratante.getCpf());
     }
 }

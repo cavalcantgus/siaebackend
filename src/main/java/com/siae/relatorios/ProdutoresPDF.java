@@ -83,7 +83,7 @@ public class ProdutoresPDF {
 
 	private void addTable(Document document, List<Produtor> produtores) {
 		int count = 1;
-		float[] columnWidthsProdutores = {1, 1, 1};
+		float[] columnWidthsProdutores = {0.5f, 2.5f, 2.5f, 2.5f};;
 
 		
 		Table tableProdutor = new Table(columnWidthsProdutores);

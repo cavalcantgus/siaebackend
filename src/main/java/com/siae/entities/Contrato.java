@@ -1,6 +1,7 @@
 package com.siae.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -29,6 +30,7 @@ public class Contrato {
 
     @ManyToOne()
     @JoinColumn(name = "contratante_id")
+    @JsonIgnoreProperties("contratos")
     private Contratante contratante;
 
     @Temporal(TemporalType.DATE)

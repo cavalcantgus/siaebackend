@@ -83,7 +83,7 @@ public class ProdutosPDF {
 
 	private void addTable(Document document, List<Produto> produtos) {
 		int count = 1;
-		float[] columnWidthsProdutos = {1, 1, 1, 1};
+		float[] columnWidthsProdutos = {0.5f, 2.5f, 2.5f, 2.5f, 2,5f};;
 
 		
 		Table tableProdutos = new Table(columnWidthsProdutos);

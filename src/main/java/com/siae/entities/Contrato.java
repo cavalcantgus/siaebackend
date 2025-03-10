@@ -33,6 +33,8 @@ public class Contrato {
     @JsonIgnoreProperties("contratos")
     private Contratante contratante;
 
+    private Long numeroContrato;
+
     @Temporal(TemporalType.DATE)
     @JsonDeserialize(using = LocalDateDeserializer.class)
     @JsonSerialize(using = LocalDateSerializer.class)

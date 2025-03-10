@@ -239,7 +239,7 @@ public class ContratoPDF {
             }
 
             addMainHeader(document,
-                    "CONTRATO N° " + contrato.getId() + "/" + contrato.getDataContratacao().format(yearNumberFormat), 90, regularFont, left);
+                    "CONTRATO N° " + contrato.getNumeroContrato() + "/" + contrato.getDataContratacao().format(yearNumberFormat), 90, regularFont, left);
             document.add(newParagraph);
             document.add(paragraph);
             addParagraph(document, clausula1, regularFont, justified);

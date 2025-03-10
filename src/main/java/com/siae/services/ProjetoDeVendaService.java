@@ -57,7 +57,7 @@ public class ProjetoDeVendaService {
 	}
 
 	public ProjetoDeVenda findByProdutorId(Long produtorId) {
-        return repository.findByProdutorId(produtorId);
+		return repository.findByProdutorId(produtorId);
 	}
 
 	public ProjetoDeVenda insert(ProjetoDeVendaDTO projetoDTO) {
@@ -82,7 +82,6 @@ public class ProjetoDeVendaService {
 			BigDecimal quantidade = projetoDTO.getQuantidade().get(i);
 			PesquisaDePreco pesquisa = pesquisaRepository.findById(pesquisaId)
 					.orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
-			pesquisa.setQuantidade(pesquisa.getQuantidade().subtract(quantidade));
 
 			Long produtoId = pesquisa.getProduto().getId();
 			Produto produto = produtoRepository.findById(produtoId)
@@ -120,20 +119,20 @@ public class ProjetoDeVendaService {
 
 	@Transactional
 	protected void updateData(ProjetoDeVenda projeto, ProjetoDeVenda projetoDeVenda) {
-	    System.out.println("Iniciando o método updateData.");
+		System.out.println("Iniciando o método updateData.");
 
-	    Produtor produtor = produtorRepository.findById(projeto.getProdutor().getId())
-	            .orElseThrow(() -> new EntityNotFoundException("Produtor não encontrado"));
-	    projetoDeVenda.setProdutor(produtor);
-	    projetoDeVenda.setDataProjeto(projeto.getDataProjeto());
+		Produtor produtor = produtorRepository.findById(projeto.getProdutor().getId())
+				.orElseThrow(() -> new EntityNotFoundException("Produtor não encontrado"));
+		projetoDeVenda.setProdutor(produtor);
+		projetoDeVenda.setDataProjeto(projeto.getDataProjeto());
 
-	    List<ProjetoProduto> projetoProdutosExistentes = projetoDeVenda.getProjetoProdutos(); // Projeto 40, Produto 1, BOLO
+		List<ProjetoProduto> projetoProdutosExistentes = projetoDeVenda.getProjetoProdutos(); // Projeto 40, Produto 1, BOLO
 
-	    if (projeto.getProjetoProdutos().size() == 1 && projetoProdutosExistentes.size() == 1) {
-	        handleSingleProjetoProduto(projeto, projetoDeVenda, projetoProdutosExistentes.get(0));
-	    } else {
-	        handleMultipleProjetoProdutos(projeto, projetoDeVenda, projetoProdutosExistentes);
-	    }
+		if (projeto.getProjetoProdutos().size() == 1 && projetoProdutosExistentes.size() == 1) {
+			handleSingleProjetoProduto(projeto, projetoDeVenda, projetoProdutosExistentes.get(0));
+		} else {
+			handleMultipleProjetoProdutos(projeto, projetoDeVenda, projetoProdutosExistentes);
+		}
 
 		/*
 		projeto = payload
@@ -141,38 +140,35 @@ public class ProjetoDeVendaService {
 		projetoProdutosExistentes = lista de projeto produtos do projetoDeVenda
 		 */
 
-	    // Calcular total e quantidade
-	    BigDecimal quantidadeTotal = projetoDeVenda.quantidadeTotal(projetoDeVenda.getProjetoProdutos());
-	    BigDecimal total = projetoDeVenda.total(projetoDeVenda.getProjetoProdutos());
-	    projetoDeVenda.setQuantidadeTotal(quantidadeTotal);
-	    projetoDeVenda.setTotal(total);
+		// Calcular total e quantidade
+		BigDecimal quantidadeTotal = projetoDeVenda.quantidadeTotal(projetoDeVenda.getProjetoProdutos());
+		BigDecimal total = projetoDeVenda.total(projetoDeVenda.getProjetoProdutos());
+		projetoDeVenda.setQuantidadeTotal(quantidadeTotal);
+		projetoDeVenda.setTotal(total);
 
-	    // Salvar as atualizações no banco
-	    for(ProjetoProduto p : projetoProdutosExistentes) {
-	    	System.out.println("Projeto: " + p.getId());
-	    }
-	    projetoProdutoRepository.saveAll(projetoDeVenda.getProjetoProdutos());
-	    projetoDeVenda.setProjetoProdutos(projetoDeVenda.getProjetoProdutos());
+		// Salvar as atualizações no banco
+		for(ProjetoProduto p : projetoProdutosExistentes) {
+			System.out.println("Projeto: " + p.getId());
+		}
+		projetoProdutoRepository.saveAll(projetoDeVenda.getProjetoProdutos());
+		projetoDeVenda.setProjetoProdutos(projetoDeVenda.getProjetoProdutos());
 	}
 
 	private void handleSingleProjetoProduto(ProjetoDeVenda projeto, ProjetoDeVenda projetoDeVenda, ProjetoProduto projetoProdutoExistente) {
-	    projeto.getProjetoProdutos().forEach(projetoProduto -> {
-	        if (!projetoProdutoExistente.getProduto().getId().equals(projetoProduto.getProduto().getId())) {
-	            System.out.println("Produto alterado detectado. Atualizando produto.");
-	            
-	            // Repor quantidade ao estoque do produto antigo
-	            devolverQuantidadeAoEstoque(projetoProdutoExistente);
+		projeto.getProjetoProdutos().forEach(projetoProduto -> {
+			if (!projetoProdutoExistente.getProduto().getId().equals(projetoProduto.getProduto().getId())) {
+				System.out.println("Produto alterado detectado. Atualizando produto.");
 
-	            // Remover o produto antigo
-	            projetoProdutoRepository.delete(projetoProdutoExistente);
+				// Remover o produto antigo
+				projetoProdutoRepository.delete(projetoProdutoExistente);
 
-	            // Adicionar o novo produto
-	            adicionarNovoProjetoProduto(projetoProduto, projetoDeVenda);
-	            projetoDeVenda.getProjetoProdutos().remove(0);
-	        } else {
-	            atualizarProjetoProdutoExistente(projetoProdutoExistente, projetoProduto);
-	        }
-	    });
+				// Adicionar o novo produto
+				adicionarNovoProjetoProduto(projetoProduto, projetoDeVenda);
+				projetoDeVenda.getProjetoProdutos().remove(0);
+			} else {
+				atualizarProjetoProdutoExistente(projetoProdutoExistente, projetoProduto);
+			}
+		});
 	}
 
 	private void handleMultipleProjetoProdutos(ProjetoDeVenda projeto, ProjetoDeVenda projetoDeVenda, List<ProjetoProduto> projetoProdutosExistentes) {
@@ -182,64 +178,49 @@ public class ProjetoDeVendaService {
 		projetoProdutosExistentes = lista de projeto produtos do projetoDeVenda
 		 */
 
-	    // Remover produtos que não estão mais no payload
-	    projetoProdutosExistentes.removeIf(projetoProdAnt -> {
-	        boolean shouldRemove = projeto.getProjetoProdutos().stream()
-	                .noneMatch(projetoProd -> projetoProd.getId().equals(projetoProdAnt.getId()));
+		// Remover produtos que não estão mais no payload
+		projetoProdutosExistentes.removeIf(projetoProdAnt -> {
+			boolean shouldRemove = projeto.getProjetoProdutos().stream()
+					.noneMatch(projetoProd -> projetoProd.getId().equals(projetoProdAnt.getId()));
 
-	        if (shouldRemove) {
-	            devolverQuantidadeAoEstoque(projetoProdAnt);
-	            projetoProdutoRepository.delete(projetoProdAnt);
-	        }
+			if (shouldRemove) {
+				projetoProdutoRepository.delete(projetoProdAnt);
+			}
 
-	        return shouldRemove;
-	    });
+			return shouldRemove;
+		});
 
-	    // Atualizar ou adicionar novos produtos
-	    projeto.getProjetoProdutos().forEach(projetoProduto -> {
-	        if (projetoProduto.getId() == null) {
-	            adicionarNovoProjetoProduto(projetoProduto, projetoDeVenda);
-	        } else {
-	            ProjetoProduto projetoProdutoExistente = projetoProdutoRepository.findById(projetoProduto.getId())
-	                    .orElseThrow(() -> new EntityNotFoundException("ProjetoProduto não encontrado"));
-	            atualizarProjetoProdutoExistente(projetoProdutoExistente, projetoProduto);
-	        }
-	    });
-	}
-
-	private void devolverQuantidadeAoEstoque(ProjetoProduto projetoProduto) {
-	    Produto produto = produtoRepository.findById(projetoProduto.getProduto().getId())
-	            .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
-	    PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
-
-	    pesquisa.setQuantidade(pesquisa.getQuantidade().add(projetoProduto.getQuantidade()));
-	    pesquisaRepository.save(pesquisa);
-	    System.out.println("Quantidade devolvida ao estoque do produto " + produto.getId());
+		// Atualizar ou adicionar novos produtos
+		projeto.getProjetoProdutos().forEach(projetoProduto -> {
+			if (projetoProduto.getId() == null) {
+				adicionarNovoProjetoProduto(projetoProduto, projetoDeVenda);
+			} else {
+				ProjetoProduto projetoProdutoExistente = projetoProdutoRepository.findById(projetoProduto.getId())
+						.orElseThrow(() -> new EntityNotFoundException("ProjetoProduto não encontrado"));
+				atualizarProjetoProdutoExistente(projetoProdutoExistente, projetoProduto);
+			}
+		});
 	}
 
 	private void adicionarNovoProjetoProduto(ProjetoProduto projetoProduto, ProjetoDeVenda projetoDeVenda) {
-	    Produto produto = produtoRepository.findById(projetoProduto.getProduto().getId())
-	            .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
-	    PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
+		Produto produto = produtoRepository.findById(projetoProduto.getProduto().getId())
+				.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
 
-	    pesquisa.setQuantidade(pesquisa.getQuantidade().subtract(projetoProduto.getQuantidade()));
-	    pesquisaRepository.save(pesquisa);
+		BigDecimal total = produto.getPrecoMedio().multiply(projetoProduto.getQuantidade());
 
-	    BigDecimal total = produto.getPrecoMedio().multiply(projetoProduto.getQuantidade());
-
-	    ProjetoProduto novoProjetoProduto = new ProjetoProduto();
-	    novoProjetoProduto.setProduto(produto);
-	    novoProjetoProduto.setQuantidade(projetoProduto.getQuantidade());
-	    novoProjetoProduto.setTotal(total);
+		ProjetoProduto novoProjetoProduto = new ProjetoProduto();
+		novoProjetoProduto.setProduto(produto);
+		novoProjetoProduto.setQuantidade(projetoProduto.getQuantidade());
+		novoProjetoProduto.setTotal(total);
 		novoProjetoProduto.setInicioEntrega(projetoProduto.getInicioEntrega());
 		novoProjetoProduto.setFimEntrega(projetoProduto.getFimEntrega());
 		novoProjetoProduto.setProjeto(projetoDeVenda);
 
-	    projetoDeVenda.getProjetoProdutos().add(novoProjetoProduto);
-	    for(ProjetoProduto p : projetoDeVenda.getProjetoProdutos()) {
-	    	System.out.println("Projeto: " + p.getId());
-	    }
-	    System.out.println("Novo produto adicionado: " + novoProjetoProduto.getId());
+		projetoDeVenda.getProjetoProdutos().add(novoProjetoProduto);
+		for(ProjetoProduto p : projetoDeVenda.getProjetoProdutos()) {
+			System.out.println("Projeto: " + p.getId());
+		}
+		System.out.println("Novo produto adicionado: " + novoProjetoProduto.getId());
 	}
 
 	private void atualizarProjetoProdutoExistente(ProjetoProduto projetoProdutoExistente, ProjetoProduto projetoProdutoAtualizado) {
@@ -250,10 +231,6 @@ public class ProjetoDeVendaService {
 
 			Produto produto = produtoRepository.findById(projetoProdutoExistente.getProduto().getId())
 					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
-			PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
-
-			pesquisa.setQuantidade(pesquisa.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
-			pesquisaRepository.save(pesquisa);
 
 			BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
 
@@ -262,13 +239,9 @@ public class ProjetoDeVendaService {
 			projetoProdutoExistente.setQuantidade(novaQuantidade);
 			projetoProdutoExistente.setTotal(total);
 		} else {
-			devolverQuantidadeAoEstoque(projetoProdutoExistente);
 
 			Produto produto = produtoRepository.findById(projetoProdutoAtualizado.getProduto().getId())
 					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
-			PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produto.getId());
-
-			pesquisa.setQuantidade(pesquisa.getQuantidade().subtract(projetoProdutoAtualizado.getQuantidade()));
 
 			BigDecimal total = produto.getPrecoMedio().multiply(projetoProdutoAtualizado.getQuantidade());
 
@@ -290,15 +263,6 @@ public class ProjetoDeVendaService {
 	public void deleteById(Long id) {
 		try {
 			if (id != null && repository.existsById(id)) {
-				ProjetoDeVenda projetoDeVenda = repository.findById(id)
-						.orElseThrow(() -> new EntityNotFoundException("Projeto não encontrado"));
-
-				projetoDeVenda.getProjetoProdutos().forEach(projetoProduto -> {
-					Long produtoId = projetoProduto.getProduto().getId();
-					PesquisaDePreco pesquisa = pesquisaRepository.findByProdutoId(produtoId);
-					pesquisa.setQuantidade(pesquisa.getQuantidade().add(projetoProduto.getQuantidade()));
-					pesquisaRepository.save(pesquisa);
-				});
 				repository.deleteById(id);
 			} else {
 				throw new EntityNotFoundException("Projeto não encontrado");

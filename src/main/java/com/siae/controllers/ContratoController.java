@@ -1,5 +1,6 @@
 package com.siae.controllers;
 
+import com.siae.entities.Contratante;
 import com.siae.entities.Contrato;
 import com.siae.entities.Entrega;
 import com.siae.relatorios.ContratoPDF;
@@ -60,5 +61,11 @@ public class ContratoController {
     public ResponseEntity<Contrato> update(@PathVariable Long id, @RequestBody Contrato obj) {
         Contrato contrato = contratoService.update(id, obj);
         return ResponseEntity.ok().body(contrato);
+    }
+
+    @DeleteMapping("/contrato/{id}")
+    public ResponseEntity<Contratante> delete(@PathVariable Long id) {
+        contratoService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -62,4 +62,16 @@ public class ContratoService {
         contratoTarget.setNumeroContrato(contrato.getNumeroContrato());
         contratoTarget.setDataContratacao(contrato.getDataContratacao());
     }
+
+    public void deleteById(Long id) {
+        try {
+            if(contratoRepository.existsById(id)) {
+                contratoRepository.deleteById(id);
+            } else {
+                throw new EntityNotFoundException("Contrato não encontrado");
+            }
+        } catch (Exception e) {
+            e.getMessage();
+        }
+    }
 }

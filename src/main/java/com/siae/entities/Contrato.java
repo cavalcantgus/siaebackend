@@ -29,7 +29,7 @@ public class Contrato {
     private Produtor produtor;
 
     @ManyToOne()
-    @JoinColumn(name = "contratante_id")
+    @JoinColumn(name = "contratante_id", nullable = true)
     @JsonIgnoreProperties("contratos")
     private Contratante contratante;
 

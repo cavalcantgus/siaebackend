@@ -22,6 +22,6 @@ public class Contratante {
     private String nome;
     private String cpf;
 
-    @OneToMany(mappedBy = "contratante", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "contratante")
     private List<Contrato> contratos;
 }

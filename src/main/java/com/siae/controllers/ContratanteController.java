@@ -1,6 +1,7 @@
 package com.siae.controllers;
 
 import com.siae.entities.Contratante;
+import com.siae.entities.Produto;
 import com.siae.services.ContratanteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,5 +45,11 @@ public class ContratanteController {
     public ResponseEntity<Contratante> update(@PathVariable Long id, @RequestBody Contratante obj) {
         Contratante contratante = contratanteService.update(id, obj);
         return ResponseEntity.ok().body(contratante);
+    }
+
+    @DeleteMapping("/contratante/{id}")
+    public ResponseEntity<Contratante> delete(@PathVariable Long id) {
+        contratanteService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

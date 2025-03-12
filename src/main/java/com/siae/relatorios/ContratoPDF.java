@@ -190,7 +190,7 @@ public class ContratoPDF {
                     .add(new Text(contrato.getProdutor().getNome()).setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Nome do fornecedor em negrito
                     .add(new Text(", fornecedor individual, situado à " + contrato.getProdutor().getEndereco() + ", " +
                             contrato.getProdutor().getMunicipio() + "-" + contrato.getProdutor().getEstado() +
-                            ", inscrito no CPF sob n.º " + contrato.getProdutor().getCaf() +
+                            ", inscrito no CPF sob n.º " + contrato.getProdutor().getCpf() +
                             ", doravante denominado(a) CONTRATADO(A), fundamentados nas disposições da Lei nº 11.947/2009 e da Lei nº 8.666/93, " +
                             "Resolução/CD/FNDE n.º 26/2013, de 17 de junho de 2013, e Resolução n° 4, de 02 de abril de 2015, e tendo em vista o que " +
                             "consta na CHAMADA PÚBLICA Nº 01/" + projetoDeVenda.getDataProjeto().format(yearNumberFormat) + "/CPL " +

@@ -12,6 +12,7 @@ import com.siae.entities.Contrato;
 import com.siae.entities.Produtor;
 import com.siae.services.ProdutorService;
 import com.siae.services.ProjetoDeVendaService;
+import com.siae.utils.NumeroPorExtenso;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ public class ContratoPDF {
 
     private final ProdutorService produtorService;
     private final ProjetoDeVendaService projetoDeVendaService;
+    private NumeroPorExtenso conversor = new NumeroPorExtenso();
 
     @Autowired
     public ContratoPDF(ProdutorService produtorService,
@@ -45,7 +47,7 @@ public class ContratoPDF {
     DateTimeFormatter yearNumberFormat = DateTimeFormatter.ofPattern("yyyy");
     PdfFont regularFont;
     PdfFont boldFont;
-    NumberFormat currencyBr = NumberFormat.getCurrencyInstance();
+    NumberFormat currencyBr = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 
     TextAlignment right = TextAlignment.RIGHT;
     TextAlignment left = TextAlignment.LEFT;
@@ -60,7 +62,9 @@ public class ContratoPDF {
 
         final String clausula1 = "CLÁUSULA PRIMEIRA:\n" +
                 "É objeto desta contratação a aquisição de GÊNEROS ALIMENTÍCIOS DA AGRICULTURA FAMILIAR PARA ALIMENTAÇÃO ESCOLAR, " +
-                "para alunos da rede de educação básica pública, verba FNDE/PNAE, 1° e 2° semestre de 2024, descritos no quadro " +
+                "para alunos da rede de educação básica pública, verba FNDE/PNAE, 1° e 2° " +
+                "semestre de " + projetoDeVenda.getDataProjeto().format(yearNumberFormat) + ", descritos no " +
+                "quadro " +
                 "previsto na Cláusula Quarta, todos de acordo com a " + "CHAMADA PÚBLICA Nº 01/" + projetoDeVenda.getDataProjeto().format(yearNumberFormat) + "/CPL " +
                 "por DISPENSA DE LICITAÇÃO Nº 01/" + projetoDeVenda.getDataProjeto().format(yearNumberFormat) + "/CPL," +
                 "o qual fica fazendo parte integrante do presente contrato, independentemente de " +
@@ -77,8 +81,11 @@ public class ContratoPDF {
         final String clausula4 = "CLÁUSULA QUARTA:\n" +
                 "Pelo fornecimento dos gêneros alimentícios, nos quantitativos descritos abaixo (no quadro), de Gêneros " +
                 "Alimentícios da Agricultura Familiar, o (a) CONTRATADO (A) receberá o valor " +
-                "total de R$ ," + projetoDeVenda.getTotal() +
-                "a) O recebimento das mercadorias dar-se-á mediante apresentação do Termo de Recebimento e das Notas " +
+                "total de R$ " + currencyBr.format(projetoDeVenda.getTotal()) + " ( " + NumeroPorExtenso.converterValorMonetarioPorExtenso(projetoDeVenda.getTotal().longValue()) + " ) " +
+                "\na) O " +
+                "recebimento " +
+                "das " +
+                "mercadorias dar-se-á mediante apresentação do Termo de " + "Recebimento e das Notas " +
                 "Fiscais de Venda pela pessoa responsável pela alimentação no local de entrega, consoante anexo deste Contrato.\n" +
                 "b) O preço de aquisição é o preço pago ao fornecedor da agricultura familiar e no cálculo do preço já devem " +
                 "estar incluídas as despesas com frete, recursos humanos e materiais, assim como com os encargos fiscais, " +
@@ -91,12 +98,9 @@ public class ContratoPDF {
 
         final String paragraph2 = "DOTAÇÃO ORÇAMENTÁRIA: \n" +
                 "06 - SECRETARIA MUNICIPAL DE EDUCACAO\n" +
-                "3.3.90.32.00 - MATERIAL, BEM OU SERVICOS PARA DISTRIBIUCAO GRATUITA\n" +
-                "12.361.0251.2036.0000 - ASSISTENCIA ALIMENTAR PARA OS ALUNOS DA REDE MUNICIPAL PROGRAMAS DE TRABALHO: ENSINO FUNDAMENTAL, EDUCACAO INFANTIL EDUCACAO DE JOVENS E ADULTOS - EJA E QUILOMBOLAS PROGRAMA NACIONAL DE AUMENTACAO ESCOLAR - PNAE\n" +
-                "\n" +
-                "PROGRAMA DA AGRICULTURA FAMILIARCLÁUSULA SEXTA:\n" +
-                "O CONTRATANTE, após receber os documentos descritos na Cláusula Quarta, alínea " +
-                "“a”, e após a tramitação do processo para instrução e liquidação, efetuará o seu pagamento no valor correspondente às entregas do mês anterior.\n";
+                "12.361.0251.2036.0000 - ASSISTENCIA ALIMENTAR PARA OS ALUNOS DA REDE MUNICIPAL " +
+                "PROGRAMAS DE TRABALHO: ENSINO FUNDAMENTAL, EDUCACAO INFANTIL EDUCACAO DE JOVENS E ADULTOS - EJA E QUILOMBOLAS PROGRAMA NACIONAL DE AUMENTACAO ESCOLAR – PNAE\n" +
+                "3.3.90.32.00 - MATERIAL, BEM OU SERVICOS PARA DISTRIBIUCAO GRATUITA";
 
         final String clausula7 = "CLÁUSULA SÉTIMA:\n" +
                 "O CONTRATANTE que não seguir a forma de liberação de recursos para pagamento do " +
@@ -159,10 +163,21 @@ public class ContratoPDF {
             regularFont = PdfFontFactory.createFont("basic_fonts/static/Lora-Regular.ttf", "Identity-H");
             boldFont = PdfFontFactory.createFont("basic_fonts/static/Lora-Bold.ttf", "Identity-H");
 
+            Paragraph paragraph1 = new Paragraph()
+                    .add(new Text("Estado do Maranhão")
+                            .setFont(boldFont)).setTextAlignment(center).setFontSize(10)
+                    .setFontColor(ColorConstants.GRAY);
+
+            Paragraph paragraphh = new Paragraph()
+                    .add(new Text("MUNICÍPIO DE COLINAS")
+                            .setFont(boldFont)).setTextAlignment(center).setFontSize(10);
+
+
             Paragraph paragraph = new Paragraph()
                     .add(new Text("A PREFEITURA MUNICIPAL DE COLINAS/SECRETARIA MUNICIPAL DE EDUCAÇÃO/SEMED, ")
                             .setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Deixa essa parte em negrito
-                    .add(new Text("Órgão de Administração Pública em Geral, inscrita no C.N.P.J. (MF) sob o nº 06.113.682/001-25, com sede à " +
+                    .add(new Text("Órgão de Administração Pública em Geral, inscrita no C.N.P.J. " +
+                            "(MF) sob o nº 06.113.682/0001-25, com sede à " +
                             "Praça Dias Carneiro, 402, Centro, representada neste ato pela Secretaria Municipal de Educação, a Sra. ")
                             .setFont(regularFont)).setTextAlignment(justified).setFontSize(10) // Texto normal
                     .add(new Text(contrato.getContratante().getNome()).setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Nome do contratante em negrito
@@ -237,9 +252,10 @@ public class ContratoPDF {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
+            document.add(paragraph1);
+            document.add(paragraphh);
             addMainHeader(document,
-                    "CONTRATO N° " + contrato.getNumeroContrato() + "/" + contrato.getDataContratacao().format(yearNumberFormat), 90, regularFont, left);
+                    "CONTRATO N° " + contrato.getNumeroContrato() + "/" + contrato.getDataContratacao().format(yearNumberFormat), 50, regularFont, left);
             document.add(newParagraph);
             document.add(paragraph);
             addParagraph(document, clausula1, regularFont, justified);
@@ -338,14 +354,14 @@ public class ContratoPDF {
             tableProdutos.addCell(createdStyledCell(p.getProduto().getUnidade(), regularFont));
             tableProdutos.addCell(createdStyledCell(p.getQuantidade().toString(), regularFont));
             tableProdutos.addCell(createdStyledCell(peridiocidadeDeEntrega, regularFont));
-            tableProdutos.addCell(createdStyledCell("R" + currencyBr.format(p.getProduto().getPrecoMedio()), regularFont));
-            tableProdutos.addCell(createdStyledCell("R" + currencyBr.format(p.getTotal()), regularFont));
+            tableProdutos.addCell(createdStyledCell(currencyBr.format(p.getProduto().getPrecoMedio()), regularFont));
+            tableProdutos.addCell(createdStyledCell(currencyBr.format(p.getTotal()), regularFont));
             tableProdutos.setWidth(UnitValue.createPercentValue(100));
         }
 
         Table tableTotalGeral = new Table(columnWidthsTotalGeral);
         tableTotalGeral.addCell(createdStyledCell("TOTAL", regularFont));
-        tableTotalGeral.addCell(createdStyledCell("R" + currencyBr.format(projetoDeVenda.getTotal()), regularFont));
+        tableTotalGeral.addCell(createdStyledCell(currencyBr.format(projetoDeVenda.getTotal()), regularFont));
 
 
         tableProdutos.setKeepTogether(true);

@@ -35,7 +35,7 @@ public class Entrega {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dataDaEntrega;
 
-    @OneToMany(mappedBy = "entrega")
+    @OneToMany(mappedBy = "entrega", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<DetalhesEntrega> detalhesEntrega;
 

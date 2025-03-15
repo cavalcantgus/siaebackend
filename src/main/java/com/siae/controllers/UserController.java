@@ -3,6 +3,7 @@ package com.siae.controllers;
 import java.net.URI;
 import java.util.List;
 
+import com.siae.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -44,8 +45,12 @@ public class UserController {
 	}
 	
 	@PutMapping("/{id}")
-	public ResponseEntity<User> update(@PathVariable Long id, @RequestBody User user) {
-		user = service.update(id, user);
+	public ResponseEntity<User> update(@PathVariable Long id, @RequestBody UserDTO request) {
+		User user = request.getUser();
+		System.out.println("USUÁRIO: " + user.toString());
+		String role = request.getRole();
+		System.out.println("USUÁRIO: " + role);
+		user = service.update(id, user, role);
 		return ResponseEntity.ok().body(user);
 	}
 	

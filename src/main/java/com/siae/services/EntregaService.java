@@ -187,14 +187,14 @@ public class EntregaService {
             Produto produto = produtoService.findById(detalhesEntrega.getProduto().getId());
             ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(produtorId);
 
-            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
-                    .filter(p -> p.getProduto().getId().equals(produto.getId()))
-                    .findFirst();
+//            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
+//                    .filter(p -> p.getProduto().getId().equals(produto.getId()))
+//                    .findFirst();
 
-            projetoProduto.ifPresent(pp -> {
-                pp.setQuantidade(pp.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
-                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-            });
+//            projetoProduto.ifPresent(pp -> {
+//                pp.setQuantidade(pp.getQuantidade().add(quantidadeAnterior).subtract(novaQuantidade));
+//                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
+//            });
 
             BigDecimal total = produto.getPrecoMedio().multiply(novaQuantidade);
             detalhesEntrega.setQuantidade(novaQuantidade);
@@ -203,16 +203,16 @@ public class EntregaService {
         }  else {
             Produto produto = produtoService.findById(entrega.getProduto().getId());
 
-            ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(entrega.getEntrega().getProdutor().getId());
+//            ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(entrega.getEntrega().getProdutor().getId());
 
-            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
-                    .filter(p -> p.getProduto().getId().equals(produto.getId()))
-                    .findFirst();
-
-            projetoProduto.ifPresent(pp -> {
-                pp.setQuantidade(pp.getQuantidade().subtract(entrega.getQuantidade()));
-                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
-            });
+//            Optional<ProjetoProduto> projetoProduto = projetoDeVenda.getProjetoProdutos().stream()
+//                    .filter(p -> p.getProduto().getId().equals(produto.getId()))
+//                    .findFirst();
+//
+//            projetoProduto.ifPresent(pp -> {
+//                pp.setQuantidade(pp.getQuantidade().subtract(entrega.getQuantidade()));
+//                pp.setTotal(pp.getQuantidade().multiply(produto.getPrecoMedio()));
+//            });
 
             BigDecimal total = produto.getPrecoMedio().multiply(entrega.getQuantidade());
             detalhesEntrega.setTotal(total);
@@ -242,5 +242,17 @@ public class EntregaService {
 
         novaEntrega.getDetalhesEntrega().add(novoDetalhesEntrega);
         projetoDeVendaRepository.save(projetoDeVenda);
+    }
+
+    public void deleteById(Long id) {
+        try {
+            if (id != null && entregaRepository.existsById(id)) {
+                entregaRepository.deleteById(id);
+            } else {
+                throw new EntityNotFoundException("Entrega não encontrada");
+            }
+        } catch (Exception e) {
+            e.getMessage();
+        }
     }
 }

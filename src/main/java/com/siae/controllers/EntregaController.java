@@ -83,4 +83,10 @@ public class EntregaController {
         Entrega entrega = entregaService.update(id, obj);
         return ResponseEntity.ok().body(entrega);
     }
+
+    @DeleteMapping("/comprovante/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        entregaService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

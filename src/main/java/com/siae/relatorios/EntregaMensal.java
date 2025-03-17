@@ -30,6 +30,7 @@ import com.itextpdf.layout.properties.UnitValue;
 public class EntregaMensal {
 
     DeviceRgb customTotalColor = new DeviceRgb(255, 215, 0);
+    DeviceRgb customTotalGeralColor = new DeviceRgb(0, 255, 255);
     DeviceRgb customGray = new DeviceRgb(169, 169, 169);
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM yyyy", new Locale("pt", "BR"));
@@ -39,7 +40,7 @@ public class EntregaMensal {
 
     PdfFont regularFont;
     PdfFont boldFont;
-    NumberFormat currencyBr = NumberFormat.getCurrencyInstance();
+    NumberFormat currencyBr = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 
     public byte[] createPdf(List<Entrega> entregas, String mes, String ano) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -130,8 +131,8 @@ public class EntregaMensal {
 
         Table tableTotalGeral = new Table(columnWidthsTotalGeral);
 
-        tableTotalGeral.addCell(createdStyledHeader("TOTAL GERAL", boldFont, customTotalColor));
-        tableTotalGeral.addCell(createdStyledCell("R" + currencyBr.format(totalGeral), regularFont));
+        tableTotalGeral.addCell(createdStyledHeader("TOTAL GERAL", boldFont, customTotalGeralColor));
+        tableTotalGeral.addCell(createdStyledCell(currencyBr.format(totalGeral), regularFont));
 
         tableTotalGeral.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
         tableTotalGeral.setKeepTogether(true);  // Garante que a tabela não seja dividida em várias páginas
@@ -149,7 +150,7 @@ public class EntregaMensal {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         tableTotal.addCell(createdStyledHeader("TOTAL / PRODUTOR", boldFont, customTotalColor));
-        tableTotal.addCell(createdStyledCell("R" + currencyBr.format(total), regularFont));
+        tableTotal.addCell(createdStyledCell(currencyBr.format(total), regularFont));
 
         tableTotal.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
         tableTotal.setKeepTogether(true);  // Garante que a tabela não seja dividida em várias páginas
@@ -159,15 +160,21 @@ public class EntregaMensal {
 
     private void addTable(Document document, Produtor produtor, List<DetalhesEntrega> detalhesEntregas) {
         // Definindo as larguras das colunas para ocupar 100% da página
-        UnitValue[] columnWidthsEntrega = {UnitValue.createPercentValue(16.66f),
-                UnitValue.createPercentValue(16.66f),
-                UnitValue.createPercentValue(16.66f),
-                UnitValue.createPercentValue(16.66f),
-                UnitValue.createPercentValue(16.66f),
-                UnitValue.createPercentValue(16.66f)};
+        UnitValue[] columnWidthsEntrega = {
+                UnitValue.createPercentValue(20f),
+                UnitValue.createPercentValue(12f),
+                UnitValue.createPercentValue(12f),
+                UnitValue.createPercentValue(18f),
+                UnitValue.createPercentValue(6f),
+                UnitValue.createPercentValue(8f),
+                UnitValue.createPercentValue(12f),
+                UnitValue.createPercentValue(12f)
+        };
 
         Table tableEntrega = new Table(columnWidthsEntrega);
         tableEntrega.addHeaderCell(createdStyledHeader("PRODUTOR", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("CPF", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("CAF", boldFont, customGray));
         tableEntrega.addHeaderCell(createdStyledHeader("PRODUTO", boldFont, customGray));
         tableEntrega.addHeaderCell(createdStyledHeader("UND", boldFont, customGray));
         tableEntrega.addHeaderCell(createdStyledHeader("QTD", boldFont, customGray));
@@ -188,11 +195,13 @@ public class EntregaMensal {
             }
 
             // Adiciona os detalhes do produto
+            tableEntrega.addCell(createdStyledCell(produtor.getCpf(), regularFont));
+            tableEntrega.addCell(createdStyledCell(produtor.getCaf(), regularFont));
             tableEntrega.addCell(createdStyledCell(d.getProduto().getDescricao(), regularFont));
             tableEntrega.addCell(createdStyledCell(d.getProduto().getUnidade(), regularFont));
             tableEntrega.addCell(createdStyledCell(d.getQuantidade().toString(), regularFont));
-            tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(d.getProduto().getPrecoMedio()), regularFont));
-            tableEntrega.addCell(createdStyledCell("R" + currencyBr.format(d.getTotal()), regularFont));
+            tableEntrega.addCell(createdStyledCell(currencyBr.format(d.getProduto().getPrecoMedio()), regularFont));
+            tableEntrega.addCell(createdStyledCell(currencyBr.format(d.getTotal()), regularFont));
         }
 
         tableEntrega.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
@@ -206,7 +215,7 @@ public class EntregaMensal {
         return new Cell().add(new Paragraph(content))
                 .setBackgroundColor(ColorConstants.WHITE)
                 .setFont(font)
-                .setFontSize(10)
+                .setFontSize(8)
                 .setTextAlignment(TextAlignment.LEFT);
     }
 

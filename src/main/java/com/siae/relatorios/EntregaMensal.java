@@ -58,8 +58,10 @@ public class EntregaMensal {
             System.out.println(entrega.getDataDaEntrega() + " - " + entrega.getProdutor().getNome());
         });
 
-        Map<Produtor, List<DetalhesEntrega>> entregasPorProd = new HashMap<>();
+        Map<Produtor, Map<Produto, List<DetalhesEntrega>>> entregasPorProd = new HashMap<>();
+
         BigDecimal totalGeral = BigDecimal.valueOf(0);
+
         for (Entrega entrega : entregasFiltradas) {
             Produtor produtor = entrega.getProdutor();
             List<DetalhesEntrega> detalhesEntregas = entrega.getDetalhesEntrega();
@@ -69,9 +71,15 @@ public class EntregaMensal {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             totalGeral = totalGeral.add(total);
 
-            entregasPorProd
-                    .computeIfAbsent(produtor, k -> new ArrayList<>())
-                    .addAll(detalhesEntregas);
+            Map<Produto, List<DetalhesEntrega>> entregasPorProduto = entregasPorProd.computeIfAbsent(produtor, k -> new HashMap<>());
+            for(DetalhesEntrega detalhesEntrega : detalhesEntregas) {
+                Produto produto = detalhesEntrega.getProduto();
+
+                entregasPorProduto
+                        .computeIfAbsent(produto, k -> new ArrayList<>())
+                        .add(detalhesEntrega);
+            }
+
         }
 
         try {
@@ -90,16 +98,71 @@ public class EntregaMensal {
 
             addMainHeader(document, "MÊS: " + entregas.get(0).getDataDaEntrega().format(monthFormatter).toUpperCase(), 10, regularFont);
 
-            for (Map.Entry<Produtor, List<DetalhesEntrega>> entry : entregasPorProd.entrySet()) {
+            for (Map.Entry<Produtor, Map<Produto, List<DetalhesEntrega>>> entry : entregasPorProd.entrySet()) {
+                BigDecimal totalQuantidadeGeral = BigDecimal.ZERO;
                 Produtor produtor = entry.getKey();
-                List<DetalhesEntrega> detalhesEntregas = entry.getValue();
-                addTable(document, produtor, detalhesEntregas);
-                addTotalTable(document, detalhesEntregas);
+                Map<Produto, List<DetalhesEntrega>> produtos = entry.getValue();
 
+                // Criar uma única tabela para o produtor
+                Table tableEntrega = createTableHeader();
+
+                boolean isFirstLine = true;
+
+                for (Map.Entry<Produto, List<DetalhesEntrega>> produtoEntry : produtos.entrySet()) {
+                    Produto produto = produtoEntry.getKey();
+                    List<DetalhesEntrega> detalhesEntregas = produtoEntry.getValue();
+
+                    BigDecimal totalQuantidade = detalhesEntregas.stream()
+                            .map(DetalhesEntrega::getQuantidade)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    totalQuantidadeGeral = totalQuantidadeGeral.add(totalQuantidade.multiply(produto.getPrecoMedio()));
+
+                    boolean isFirstLineProd = true;
+
+                    for (DetalhesEntrega d : detalhesEntregas) {
+                        // Na primeira linha, adiciona os dados do produtor
+                        if (isFirstLine) {
+                            tableEntrega.addCell(createdStyledCell(produtor.getNome(), regularFont).setBorderBottom(null));
+                            tableEntrega.addCell(createdStyledCell(produtor.getCpf(), regularFont).setBorderBottom(null));
+                            tableEntrega.addCell(createdStyledCell(produtor.getCaf(), regularFont).setBorderBottom(null));
+                            isFirstLine = false;
+                        } else {
+                            // Para as linhas seguintes, adiciona células vazias nas colunas do produtor
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                        }
+
+                        // Adiciona os detalhes do produto apenas na primeira linha do grupo
+                        if (isFirstLineProd) {
+                            tableEntrega.addCell(createdStyledCell(produto.getDescricao(), regularFont).setBorderBottom(null));
+                            tableEntrega.addCell(createdStyledCell(produto.getUnidade(), regularFont).setBorderBottom(null));
+                            tableEntrega.addCell(createdStyledCell(totalQuantidade.toString(), regularFont).setBorderBottom(null));
+                            tableEntrega.addCell(createdStyledCell(currencyBr.format(produto.getPrecoMedio()), regularFont).setBorderBottom(null));
+                            tableEntrega.addCell(createdStyledCell(currencyBr.format(totalQuantidade.multiply(produto.getPrecoMedio())), regularFont).setBorderBottom(null));
+                            isFirstLineProd = false;
+                        } else {
+                            // Preenche as células vazias nas colunas do produto
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                            tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                        }
+                    }
+
+                }
+
+                tableEntrega.setWidth(UnitValue.createPercentValue(100));
+                tableEntrega.setKeepTogether(true);
+
+                // Adiciona a tabela ao documento
+                document.add(tableEntrega);
+                addTotalTable(document, totalQuantidadeGeral);
             }
             addParagraph(document, "", regularFont);
             addTotalGeral(document, totalGeral);
-
             addFooter(document);
 
             document.close();
@@ -125,6 +188,32 @@ public class EntregaMensal {
 
     }
 
+    private Table createTableHeader() {
+        UnitValue[] columnWidthsEntrega = {
+                UnitValue.createPointValue(100), // PRODUTOR
+                UnitValue.createPointValue(80),  // CPF
+                UnitValue.createPointValue(80),  // CAF
+                UnitValue.createPointValue(120), // PRODUTO
+                UnitValue.createPointValue(40),  // UND
+                UnitValue.createPointValue(60),  // QTD
+                UnitValue.createPointValue(80),  // R$ / UNT
+                UnitValue.createPointValue(100)  // TOTAL
+        };
+
+        Table tableEntrega = new Table(columnWidthsEntrega);
+        tableEntrega.addHeaderCell(createdStyledHeader("PRODUTOR", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("CPF", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("CAF", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("PRODUTO", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("UND", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("QTD", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("R$ / UNT", boldFont, customGray));
+        tableEntrega.addHeaderCell(createdStyledHeader("TOTAL", boldFont, customGray));
+        tableEntrega.setWidth(UnitValue.createPercentValue(100));
+        tableEntrega.setKeepTogether(true);
+        return tableEntrega;
+    }
+
     private void addTotalGeral(Document document, BigDecimal totalGeral) {
         UnitValue[] columnWidthsTotalGeral = {UnitValue.createPercentValue(83.33f),
                 UnitValue.createPercentValue(16.66f)};
@@ -140,17 +229,17 @@ public class EntregaMensal {
         document.add(tableTotalGeral);
     }
 
-    private void addTotalTable(Document document, List<DetalhesEntrega> detalhesEntregas) {
-        UnitValue[] columnWidthsTotalGeral = {UnitValue.createPercentValue(83.33f),
-                UnitValue.createPercentValue(16.66f)};
+    private void addTotalTable(Document document, BigDecimal totalQuantidadeGeral) {
+
+        UnitValue[] columnWidthsTotalGeral = {
+                UnitValue.createPercentValue(83.33f),
+                UnitValue.createPercentValue(16.66f)
+        };
 
         Table tableTotal = new Table(columnWidthsTotalGeral);
-        BigDecimal total = detalhesEntregas.stream()
-                .map(DetalhesEntrega::getTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         tableTotal.addCell(createdStyledHeader("TOTAL / PRODUTOR", boldFont, customTotalColor));
-        tableTotal.addCell(createdStyledCell(currencyBr.format(total), regularFont));
+        tableTotal.addCell(createdStyledCell(currencyBr.format(totalQuantidadeGeral), regularFont));
 
         tableTotal.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível
         tableTotal.setKeepTogether(true);  // Garante que a tabela não seja dividida em várias páginas
@@ -158,7 +247,15 @@ public class EntregaMensal {
         document.add(tableTotal);
     }
 
-    private void addTable(Document document, Produtor produtor, List<DetalhesEntrega> detalhesEntregas) {
+
+    private void addTable(Document document, Produtor produtor, Produto produto,
+                          List<DetalhesEntrega> detalhesEntregas) {
+
+
+        BigDecimal totalQuantidade = detalhesEntregas.stream()
+                .map(DetalhesEntrega::getQuantidade) // Extrai a quantidade
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         // Definindo as larguras das colunas para ocupar 100% da página
         UnitValue[] columnWidthsEntrega = {
                 UnitValue.createPercentValue(20f),
@@ -182,6 +279,7 @@ public class EntregaMensal {
         tableEntrega.addHeaderCell(createdStyledHeader("TOTAL", boldFont, customGray ));
 
         boolean isFirstLine = true;
+        boolean isFirstLineProd = true;
 
         // Itera pelos detalhes de entrega associados a este produtor
         for (DetalhesEntrega d : detalhesEntregas) {
@@ -197,11 +295,26 @@ public class EntregaMensal {
             // Adiciona os detalhes do produto
             tableEntrega.addCell(createdStyledCell(produtor.getCpf(), regularFont));
             tableEntrega.addCell(createdStyledCell(produtor.getCaf(), regularFont));
-            tableEntrega.addCell(createdStyledCell(d.getProduto().getDescricao(), regularFont));
-            tableEntrega.addCell(createdStyledCell(d.getProduto().getUnidade(), regularFont));
-            tableEntrega.addCell(createdStyledCell(d.getQuantidade().toString(), regularFont));
-            tableEntrega.addCell(createdStyledCell(currencyBr.format(d.getProduto().getPrecoMedio()), regularFont));
-            tableEntrega.addCell(createdStyledCell(currencyBr.format(d.getTotal()), regularFont));
+            if(isFirstLineProd) {
+                tableEntrega.addCell(createdStyledCell(produto.getDescricao(),
+                        regularFont));
+                tableEntrega.addCell(createdStyledCell(produto.getUnidade(), regularFont));
+                tableEntrega.addCell(createdStyledCell(totalQuantidade.toString(), regularFont));
+                tableEntrega.addCell(createdStyledCell(currencyBr.format(produto.getPrecoMedio()),
+                        regularFont));
+                tableEntrega.addCell(createdStyledCell(currencyBr.format(totalQuantidade.multiply(produto.getPrecoMedio())),
+                        regularFont));
+                isFirstLineProd = false;
+            }
+            else {
+                tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+                tableEntrega.addCell(new Cell().setBorderBottom(null).setBorderTop(null));
+            }
+
+
         }
 
         tableEntrega.setWidth(UnitValue.createPercentValue(100));  // Faz a tabela ocupar 100% da largura disponível

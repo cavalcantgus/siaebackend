@@ -80,6 +80,7 @@ public class ComprovanteDeRecebimento {
         float[] columnWidthsRelacao = {1};
         float[] columnWidthsProdutorNome = {1};
         float[] columnWidthsProdutos = {1, 1, 1, 1, 1};
+        float[] columnWidthsProdutorDocs = {1, 1};
         float[] columnWidthsTotalGeral = {4000f, 450f};
 
         // Nome do Produtor
@@ -87,6 +88,11 @@ public class ComprovanteDeRecebimento {
         tableProdutorNome.addHeaderCell(createdStyledHeader("I – IDENTIFICAÇÃO DO AGRICULTOR/ FORNECEDOR", boldFont));
         tableProdutorNome.addCell(createdStyledCell("AGRICULTOR: " + entrega.getProdutor().getNome(), regularFont));
         tableProdutorNome.setWidth(UnitValue.createPercentValue(100));
+
+        Table tableProdutorDocs = new Table(columnWidthsProdutorDocs);
+        tableProdutorDocs.addCell(createdStyledCell("5 - N° da CAF - N° " + entrega.getProdutor().getCaf(), regularFont));
+        tableProdutorDocs.addCell(createdStyledCell("6 - CPF N° " + entrega.getProdutor().getCpf(), regularFont));
+        tableProdutorDocs.setWidth(UnitValue.createPercentValue(100));
 
         Table tableRelacao = new Table(columnWidthsRelacao);
         tableRelacao.addHeaderCell(createdStyledHeader("II - RELAÇÃO DE PRODUTOS", boldFont));
@@ -114,11 +120,13 @@ public class ComprovanteDeRecebimento {
 //
 
         tableProdutorNome.setKeepTogether(true);
+        tableProdutorDocs.setKeepTogether(true);
         tableProdutos.setKeepTogether(true);
         tableRelacao.setKeepTogether(true);
         tableTotalGeral.setKeepTogether(false);
 //
         document.add(tableProdutorNome);
+        document.add(tableProdutorDocs);
         document.add(tableRelacao);
         document.add(tableProdutos);
         document.add(tableTotalGeral);

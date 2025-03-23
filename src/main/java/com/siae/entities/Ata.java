@@ -27,6 +27,8 @@ public class Ata {
     private String prefeito;
     private String presidente;
     private String nutricionista;
+    private String secCpl;
+    private String secEduc;
 
     @ElementCollection
     private List<String> membros;

@@ -14,8 +14,6 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.siae.entities.Ata;
 import com.siae.entities.Produtor;
-import com.siae.entities.ProjetoDeVenda;
-import com.siae.entities.ProjetoProduto;
 import com.siae.services.ProdutorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +24,7 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 
 @Service
@@ -54,6 +53,11 @@ public class AtaDaChamadaPDF {
     public byte[] createPdf(Ata ata) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         List<Produtor> produtores = produtorService.findAll();
+
+        produtores.sort((prod1, prod2) -> {
+            Collator collator = Collator.getInstance(new Locale("pt", "BR"));
+            return collator.compare(prod1.getNome(), prod2.getNome());
+        });
 
         try {
             PdfWriter writer = new PdfWriter(baos);
@@ -105,9 +109,9 @@ public class AtaDaChamadaPDF {
                             .setFont(regularFont)).setTextAlignment(justified).setFontSize(10)
                     .add(new Text("2 – Projetos de Vendas/Proposta de Preços, ")
                             .setFont(boldFont)).setTextAlignment(justified).setFontSize(10)
-                    .add(new Text("sendo consideradas  válidas, uma vez que os valores propostos, encontram - se abaixo do valor estimado na pesquisa de preços de mercado, ainda na mesma sessão foram analisadas os Projetos de Vendas e a Documentação dos Agricultores Familiar Individual, os quais encontram-se aptos a fornecerem os alimentos através da Associação acima referenciada . O resultado da Apuração e Classificação da Proposta de Preços, será afixado no quadro de avisos da Prefeitura Municipal de Colinas. Os autos do processo continuam com vista fraqueados aos interessados. Eu, ")
+                    .add(new Text("sendo consideradas  válidas, uma vez que os valores propostos, encontram - se abaixo do valor estimado na pesquisa de preços de mercado, ainda na mesma sessão foram analisadas os Projetos de Vendas e a Documentação dos Agricultores Familiar Individual, os quais encontram-se aptos a fornecerem os alimentos através da Associação acima referenciada . O resultado da Apuração e Classificação da Proposta de Preços, será afixado no quadro de avisos da Prefeitura Municipal de Colinas. Os autos do processo continuam com vista fraqueados aos interessados. Eu,")
                             .setFont(regularFont)).setTextAlignment(justified).setFontSize(10)
-                    .add(new Text("Carlos dos Santos ")
+                    .add(new Text(" " + ata.getSecCpl())
                             .setFont(boldFont)).setTextAlignment(justified).setFontSize(10)
                     .add(new Text("lavrei a presente ata, que após lida e achada conforme vai assinada pelo presidente, pelos membros da Comissão Permanente de Licitação/CPL, e representantes legais da Associação Agricultores Individuais associados, conforme detalhamento abaixo:")
                             .setFont(regularFont)).setTextAlignment(justified).setFontSize(10);
@@ -172,10 +176,16 @@ public class AtaDaChamadaPDF {
             document.add(second);
             addMainHeader(document, "PRESIDENTE", 30, boldFont);
             addMainHeader(document, ata.getPresidente().toUpperCase(), 0, boldFont);
-            addParagraph(document, "MEMBROS", boldFont, 0);
-            int count = 1;
-            for(String membro  : ata.getMembros()) {
-                addParagraph(document, count + " - " + membro.toUpperCase(), boldFont, 0);
+            addParagraph(document, "MEMBROS:", boldFont, 0);
+            if(!ata.getMembros().isEmpty()){
+                int count = 1;
+                for(String membro  : ata.getMembros()) {
+                    if(Objects.equals(membro, "") || membro == null) {
+                        continue;
+                    }
+                    addParagraph(document, count + " - " + membro.toUpperCase(), boldFont, 0);
+                    count++;
+                }
             }
             addTableSignature(document, produtores);
             addFooter(document, ata);
@@ -198,20 +208,33 @@ public class AtaDaChamadaPDF {
                 .setFontSize(10);
         document.add(assign);
 
-        Paragraph name = new Paragraph(ata.getNutricionista())
+        Paragraph name = new Paragraph(ata.getNutricionista().toUpperCase())
                 .setTextAlignment(TextAlignment.CENTER)
                 .setFontSize(10);
         document.add(name);
 
+        Paragraph text = new Paragraph("NUTRICIONISTA")
+                .setTextAlignment(TextAlignment.CENTER)
+                .setFontSize(10)
+                .setMarginBottom(20);
+        document.add(text);
+
         Paragraph assign1 = new Paragraph("___________________________________________")
                 .setTextAlignment(TextAlignment.CENTER)
-                .setFontSize(10);
+                .setFontSize(10)
+                .setMarginTop(20);
         document.add(assign1);
 
-        Paragraph name1 = new Paragraph(ata.getNutricionista())
+        Paragraph name1 = new Paragraph(ata.getSecEduc().toUpperCase())
                 .setTextAlignment(TextAlignment.CENTER)
                 .setFontSize(10);
         document.add(name1);
+
+        Paragraph text1 = new Paragraph("SECRETARIA MUNICIPAL DE EDUCAÇÃO/SEMED")
+                .setTextAlignment(TextAlignment.CENTER)
+                .setFontSize(10)
+                .setMarginBottom(20);
+        document.add(text1);
 
     }
 

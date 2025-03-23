@@ -1,6 +1,8 @@
 package com.siae.controllers;
 
 import com.siae.entities.Ata;
+import com.siae.entities.Contratante;
+import com.siae.entities.Contrato;
 import com.siae.relatorios.AtaDaChamadaPDF;
 import com.siae.services.AtaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,5 +52,17 @@ public class AtaController {
         Ata ata = ataService.insert(obj);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(ata.getId()).toUri();
         return ResponseEntity.created(uri).body(ata);
+    }
+
+    @PutMapping("/ata/{id}")
+    public ResponseEntity<Ata> update(@PathVariable Long id, @RequestBody Ata obj) {
+        Ata ata = ataService.update(id, obj);
+        return ResponseEntity.ok().body(ata);
+    }
+
+    @DeleteMapping("/ata/{id}")
+    public ResponseEntity<Ata> delete(@PathVariable Long id) {
+        ataService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

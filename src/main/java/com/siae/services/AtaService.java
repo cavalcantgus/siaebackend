@@ -51,6 +51,7 @@ public class AtaService {
     }
 
     private void updateData(Ata ata, Ata ataTarget) {
+        ataTarget.setHora(ata.getHora());
         ataTarget.setPrefeito(ata.getPrefeito());
         ataTarget.setPresidente(ata.getPresidente());
         ataTarget.setNutricionista(ata.getNutricionista());

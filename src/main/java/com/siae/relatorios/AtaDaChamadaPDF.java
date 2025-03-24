@@ -37,7 +37,7 @@ public class AtaDaChamadaPDF {
     public AtaDaChamadaPDF(ProdutorService produtorService) {
         this.produtorService = produtorService;
     }
-
+    DateTimeFormatter hourMinuteFormat = DateTimeFormatter.ofPattern("HH:mm");
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM yyyy", new Locale("pt", "BR"));
     DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM", new Locale("pt", "BR"));
     DateTimeFormatter yearNumberFormat = DateTimeFormatter.ofPattern("yyyy");
@@ -51,6 +51,76 @@ public class AtaDaChamadaPDF {
     TextAlignment center = TextAlignment.CENTER;
     TextAlignment justified = TextAlignment.JUSTIFIED;
     public byte[] createPdf(Ata ata) {
+        String horaFormatada = ata.getHora().format(hourMinuteFormat);
+
+        int hora = ata.getHora().getHour();
+        int minutos = ata.getHora().getMinute();
+
+        String minutosPorExtenso;
+        if (minutos == 0) {
+            minutosPorExtenso = "em ponto";
+        } else if (minutos == 30) {
+            minutosPorExtenso = "e meia";
+        } else {
+            String[] unidades = {"", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"};
+            String[] especiais = {"dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"};
+            String[] dezenas = {"", "", "vinte", "trinta", "quarenta", "cinquenta"};
+
+            if (minutos < 10) {
+                minutosPorExtenso = "e " + unidades[minutos];
+            } else if (minutos < 20) {
+                minutosPorExtenso = "e " + especiais[minutos - 10];
+            } else {
+                int dezena = minutos / 10;
+                int unidade = minutos % 10;
+                minutosPorExtenso = "e " + dezenas[dezena];
+                if (unidade != 0) {
+                    minutosPorExtenso += " e " + unidades[unidade];
+                }
+            }
+        }
+
+        String horaPorExtenso = switch (hora) {
+            case 0 -> "zero horas";
+            case 1 -> "uma hora";
+            case 2 -> "duas horas";
+            case 3 -> "três horas";
+            case 4 -> "quatro horas";
+            case 5 -> "cinco horas";
+            case 6 -> "seis horas";
+            case 7 -> "sete horas";
+            case 8 -> "oito horas";
+            case 9 -> "nove horas";
+            case 10 -> "dez horas";
+            case 11 -> "onze horas";
+            case 12 -> "doze horas";
+            case 13 -> "treze horas";
+            case 14 -> "quatorze horas";
+            case 15 -> "quinze horas";
+            case 16 -> "dezesseis horas";
+            case 17 -> "dezessete horas";
+            case 18 -> "dezoito horas";
+            case 19 -> "dezenove horas";
+            case 20 -> "vinte horas";
+            case 21 -> "vinte e uma horas";
+            case 22 -> "vinte e duas horas";
+            case 23 -> "vinte e três horas";
+            default -> "hora inválida";
+        };
+        String horaCompletaPorExtenso;
+        if(minutos > 1) {
+            horaCompletaPorExtenso =
+                    "às " + horaFormatada + " (" + horaPorExtenso + " " + minutosPorExtenso + " " +
+                            "minutos)";
+        } else if(minutos == 0) {
+            horaCompletaPorExtenso =
+                    "às " + horaFormatada + " (" + horaPorExtenso + " "  + minutosPorExtenso + ")";
+        } else {
+            horaCompletaPorExtenso =
+                    "às " + horaFormatada + " (" + horaPorExtenso + " "  + minutosPorExtenso +
+                            " minuto)";
+        }
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         List<Produtor> produtores = produtorService.findAll();
 
@@ -82,7 +152,9 @@ public class AtaDaChamadaPDF {
                             "dia" +
                             " do mês de " + ata.getData().format(monthFormatter) + " de 2025, ")
                             .setFont(boldFont)).setTextAlignment(justified).setFontSize(10) // Deixa essa parte em negrito
-                    .add(new Text("às 9:00 (nove horas), na sala de reunião desta Prefeitura " +
+                    .add(new Text(horaCompletaPorExtenso + ", na sala de " +
+                            "reunião " +
+                            "desta Prefeitura " +
                             "Municipal, nesta cidade de Colinas - Maranhão, reuniu-se a CPL, " +
                             "instituída pela Portaria Nº 39/2025, de 01.01." + ata.getData().format(yearNumberFormat) +
                             ", por ato " +

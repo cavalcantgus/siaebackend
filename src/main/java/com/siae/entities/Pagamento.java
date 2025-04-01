@@ -1,11 +1,11 @@
 package com.siae.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.siae.enums.StatusPagamento;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,14 +16,18 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "entrega")
+@Table(name = "pagamento")
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-public class Entrega {
+public class Pagamento {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private BigDecimal total;
+    private BigDecimal quantidade;
 
     @ManyToOne
     @JoinColumn(name = "produtor_id")
@@ -33,25 +37,10 @@ public class Entrega {
     @JsonDeserialize(using = LocalDateDeserializer.class)
     @JsonSerialize(using = LocalDateSerializer.class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate dataDaEntrega;
+    private LocalDate data;
 
-    @OneToMany(mappedBy = "entrega", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<DetalhesEntrega> detalhesEntrega;
+    @Enumerated(EnumType.STRING)
+    private StatusPagamento status;
 
-    private Boolean enviadoParaPagamento;
-
-    private BigDecimal total;
-
-    private BigDecimal quantidade;
-
-    public BigDecimal valorTotal(List<DetalhesEntrega> detalhesEntrega) {
-        return detalhesEntrega.stream().map(DetalhesEntrega::getTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public BigDecimal quantidadeTotal(List<DetalhesEntrega> detalhesEntrega) {
-        return detalhesEntrega.stream().map(DetalhesEntrega::getQuantidade)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
+    private String notaFiscal;
 }

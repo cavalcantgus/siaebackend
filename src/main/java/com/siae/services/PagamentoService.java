@@ -3,13 +3,13 @@ package com.siae.services;
 import com.siae.entities.*;
 import com.siae.enums.StatusPagamento;
 import com.siae.repositories.EntregaPagamentoRepository;
-import com.siae.repositories.EntregaRepository;
 import com.siae.repositories.PagamentoRepository;
 import com.siae.repositories.ProdutorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,17 +19,21 @@ import java.util.*;
 public class PagamentoService {
 
     private final EntregaService entregaService;
+    private final DocumentoService documentoService;
+    private final NotaFiscalService notaFiscalService;
     private ProdutorRepository produtorRepository;
     private PagamentoRepository pagamentoRepository;
     private EntregaPagamentoRepository entregaPagamentoRepository;
 
     @Autowired
     public PagamentoService(PagamentoRepository pagamentoRepository,
-                            ProdutorRepository produtorRepository, EntregaPagamentoRepository entregaPagamentoRepository, EntregaService entregaService) {
+                            ProdutorRepository produtorRepository, EntregaPagamentoRepository entregaPagamentoRepository, EntregaService entregaService, DocumentoService documentoService, NotaFiscalService notaFiscalService) {
         this.pagamentoRepository = pagamentoRepository;
         this.produtorRepository = produtorRepository;
         this.entregaPagamentoRepository = entregaPagamentoRepository;
         this.entregaService = entregaService;
+        this.documentoService = documentoService;
+        this.notaFiscalService = notaFiscalService;
     }
 
     public List<Pagamento> findAll() {
@@ -98,12 +102,12 @@ public class PagamentoService {
         return pagamentoRepository.saveAll(pagamentosMap.values());
     }
 
-    public Pagamento update(Long id, Pagamento pagamento, String filePath) {
+    public Pagamento update(Long id, Pagamento pagamento, MultipartFile notaFiscal) {
         try {
             if(pagamentoRepository.existsById(id)) {
                 Pagamento pagamentoTarget = pagamentoRepository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado"));
-                updateData(pagamento, pagamentoTarget, filePath);
+                updateData(pagamento, pagamentoTarget, notaFiscal);
                 return pagamentoRepository.save(pagamentoTarget);
             } else {
                 throw new EntityNotFoundException("Contrato não encontrado");
@@ -114,14 +118,16 @@ public class PagamentoService {
         }
     }
 
-    private void updateData(Pagamento pagamento, Pagamento pagamentoTarget, String filePath) {
+    private void updateData(Pagamento pagamento, Pagamento pagamentoTarget,
+                            MultipartFile notaFiscal) {
         pagamentoTarget.setData(LocalDate.now());
         pagamentoTarget.setProdutor(pagamento.getProdutor());
         pagamentoTarget.setQuantidade(pagamento.getQuantidade());
         pagamentoTarget.setTotal(pagamento.getTotal());
 
-        if(filePath != null) {
-            pagamentoTarget.setNotaFiscal(filePath);
+        if(notaFiscal != null) {
+            NotaFiscal nota = notaFiscalService.insert(notaFiscal, pagamentoTarget);
+            pagamentoTarget.setNotaFiscal(nota);
         }
         if(pagamento.getStatus() != null) {
             try {
@@ -130,6 +136,27 @@ public class PagamentoService {
             } catch (IllegalArgumentException e) {
                 System.out.println("Status inválido: " + pagamento.getStatus());
             }
+        }
+    }
+
+    @Transactional
+    public void deleteById(Long id) {
+        try {
+            if(pagamentoRepository.existsById(id)) {
+                List<EntregaPagamento> entregasPagamentos = entregaPagamentoRepository.findByPagamentoId(id);
+
+                for(EntregaPagamento entregaPagamento : entregasPagamentos) {
+                    entregaPagamento.getEntrega().setEnviadoParaPagamento(false);
+                }
+
+                entregaPagamentoRepository.deleteAll(entregasPagamentos);
+
+                pagamentoRepository.deleteById(id);
+            } else {
+                throw new EntityNotFoundException("Pagamento não encontrado");
+            }
+        } catch (Exception e) {
+            e.getMessage();
         }
     }
 }

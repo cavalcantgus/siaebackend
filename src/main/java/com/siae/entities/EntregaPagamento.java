@@ -16,8 +16,8 @@ public class EntregaPagamento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "entrega_id")
+    @OneToOne
+    @JoinColumn(name = "entrega_id", unique = true)
     private Entrega entrega;
 
     @ManyToOne

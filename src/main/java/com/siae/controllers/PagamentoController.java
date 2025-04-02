@@ -60,12 +60,12 @@ public class PagamentoController {
         return ResponseEntity.ok().body(pagamentos);
     }
 
-    @PutMapping("/pagamento/{id}")
-    public ResponseEntity<Pagamento> update(@PathVariable Long id, @RequestBody Pagamento obj) {
-        MultipartFile nota = null;
-        Pagamento pagamento = pagamentoService.update(id, obj, nota);
-        return ResponseEntity.ok().body(pagamento);
-    }
+//    @PutMapping("/pagamento/{id}")
+//    public ResponseEntity<Pagamento> update(@PathVariable Long id, @RequestBody Pagamento obj) {
+//        MultipartFile nota = null;
+//        Pagamento pagamento = pagamentoService.update(id, obj, nota);
+//        return ResponseEntity.ok().body(pagamento);
+//    }
 
     @PutMapping("/pagamento/upload/{id}")
     public ResponseEntity<Pagamento> upload(@PathVariable Long id,

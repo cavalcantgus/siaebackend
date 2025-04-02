@@ -45,14 +45,14 @@ public class EntregaMensal {
     public byte[] createPdf(List<Entrega> entregas, String mes, String ano) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        List<Entrega> entregasFiltradas = new ArrayList<>(entregas.stream()
-                .filter((entrega -> entrega.getDataDaEntrega().format(monthNumberFormat).equals(mes) && entrega.getDataDaEntrega().format(yearNumberFormat).equals(ano)))
-                .toList());
-
-        entregasFiltradas.sort((entrega1, entrega2) -> {
+        entregas.sort((entrega1, entrega2) -> {
             Collator collator = Collator.getInstance(new Locale("pt", "BR"));
             return collator.compare(entrega1.getProdutor().getNome(), entrega2.getProdutor().getNome());
         });
+
+        List<Entrega> entregasFiltradas = new ArrayList<>(entregas.stream()
+                .filter((entrega -> entrega.getDataDaEntrega().format(monthNumberFormat).equals(mes) && entrega.getDataDaEntrega().format(yearNumberFormat).equals(ano)))
+                .toList());
 
         entregasFiltradas.forEach(entrega -> {
             System.out.println(entrega.getDataDaEntrega() + " - " + entrega.getProdutor().getNome());

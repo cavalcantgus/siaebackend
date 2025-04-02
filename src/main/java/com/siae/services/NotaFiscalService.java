@@ -56,8 +56,30 @@ public class NotaFiscalService {
         }
         notaFiscalRepository.save(nota);
         return nota;
-
     }
+
+    public NotaFiscal update(MultipartFile notaFiscal, Pagamento pagamento) {
+        NotaFiscal nota = notaFiscalRepository.findByPagamentoId(pagamento.getId());
+
+        try {
+            String uploadDir = "uploads/";
+            Path filePath = Paths.get(uploadDir + notaFiscal.getOriginalFilename());
+
+            Files.createDirectories(filePath.getParent());
+            Files.write(filePath, notaFiscal.getBytes());
+
+            nota.setFileName(notaFiscal.getOriginalFilename());
+            nota.setFileType(notaFiscal.getContentType());
+            nota.setFilePath(filePath.toString());
+            nota.setPagamento(pagamento);
+            notaFiscalRepository.save(nota); // Salva a NotaFiscal
+
+            return nota;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao processar arquivo", e);
+        }
+    }
+
 
     @Transactional
     public void delete(Long notaId, Long pagamentoId) {

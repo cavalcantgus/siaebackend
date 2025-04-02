@@ -44,7 +44,7 @@ public class Pagamento {
     @Enumerated(EnumType.STRING)
     private StatusPagamento status;
 
-    @OneToOne(mappedBy = "pagamento", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToOne(mappedBy = "pagamento", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonManagedReference
     private NotaFiscal notaFiscal;
 }

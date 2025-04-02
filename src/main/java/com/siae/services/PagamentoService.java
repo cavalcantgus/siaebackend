@@ -3,6 +3,7 @@ package com.siae.services;
 import com.siae.entities.*;
 import com.siae.enums.StatusPagamento;
 import com.siae.repositories.EntregaPagamentoRepository;
+import com.siae.repositories.NotaFiscalRepository;
 import com.siae.repositories.PagamentoRepository;
 import com.siae.repositories.ProdutorRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,19 +22,21 @@ public class PagamentoService {
     private final EntregaService entregaService;
     private final DocumentoService documentoService;
     private final NotaFiscalService notaFiscalService;
+    private final NotaFiscalRepository notaFiscalRepository;
     private ProdutorRepository produtorRepository;
     private PagamentoRepository pagamentoRepository;
     private EntregaPagamentoRepository entregaPagamentoRepository;
 
     @Autowired
     public PagamentoService(PagamentoRepository pagamentoRepository,
-                            ProdutorRepository produtorRepository, EntregaPagamentoRepository entregaPagamentoRepository, EntregaService entregaService, DocumentoService documentoService, NotaFiscalService notaFiscalService) {
+                            ProdutorRepository produtorRepository, EntregaPagamentoRepository entregaPagamentoRepository, EntregaService entregaService, DocumentoService documentoService, NotaFiscalService notaFiscalService, NotaFiscalRepository notaFiscalRepository) {
         this.pagamentoRepository = pagamentoRepository;
         this.produtorRepository = produtorRepository;
         this.entregaPagamentoRepository = entregaPagamentoRepository;
         this.entregaService = entregaService;
         this.documentoService = documentoService;
         this.notaFiscalService = notaFiscalService;
+        this.notaFiscalRepository = notaFiscalRepository;
     }
 
     public List<Pagamento> findAll() {
@@ -104,7 +107,7 @@ public class PagamentoService {
 
     public Pagamento update(Long id, Pagamento pagamento, MultipartFile notaFiscal) {
         try {
-            if(pagamentoRepository.existsById(id)) {
+            if (pagamentoRepository.existsById(id)) {
                 Pagamento pagamentoTarget = pagamentoRepository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado"));
                 updateData(pagamento, pagamentoTarget, notaFiscal);
@@ -118,18 +121,26 @@ public class PagamentoService {
         }
     }
 
-    private void updateData(Pagamento pagamento, Pagamento pagamentoTarget,
-                            MultipartFile notaFiscal) {
+    private void updateData(Pagamento pagamento, Pagamento pagamentoTarget, MultipartFile notaFiscal) {
         pagamentoTarget.setData(LocalDate.now());
         pagamentoTarget.setProdutor(pagamento.getProdutor());
         pagamentoTarget.setQuantidade(pagamento.getQuantidade());
         pagamentoTarget.setTotal(pagamento.getTotal());
 
-        if(notaFiscal != null) {
-            NotaFiscal nota = notaFiscalService.insert(notaFiscal, pagamentoTarget);
-            pagamentoTarget.setNotaFiscal(nota);
+        NotaFiscal nota;
+        NotaFiscal notaFiscalExistente = notaFiscalRepository.findByPagamentoId(pagamentoTarget.getId());
+
+        if (notaFiscalExistente != null) {
+            // Atualiza a nota fiscal existente
+            nota = notaFiscalService.update(notaFiscal, pagamentoTarget);
+        } else {
+            // Insere uma nova nota fiscal
+            nota = notaFiscalService.insert(notaFiscal, pagamentoTarget);
         }
-        if(pagamento.getStatus() != null) {
+        // Certifique-se de definir a nota fiscal no pagamentoTarget
+        pagamentoTarget.setNotaFiscal(nota);
+
+        if (pagamento.getStatus() != null) {
             try {
                 StatusPagamento statusPagamento = StatusPagamento.valueOf(pagamento.getStatus().name());
                 pagamentoTarget.setStatus(statusPagamento);
@@ -142,10 +153,10 @@ public class PagamentoService {
     @Transactional
     public void deleteById(Long id) {
         try {
-            if(pagamentoRepository.existsById(id)) {
+            if (pagamentoRepository.existsById(id)) {
                 List<EntregaPagamento> entregasPagamentos = entregaPagamentoRepository.findByPagamentoId(id);
 
-                for(EntregaPagamento entregaPagamento : entregasPagamentos) {
+                for (EntregaPagamento entregaPagamento : entregasPagamentos) {
                     entregaPagamento.getEntrega().setEnviadoParaPagamento(false);
                 }
 

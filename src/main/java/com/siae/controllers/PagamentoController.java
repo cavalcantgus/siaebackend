@@ -62,36 +62,29 @@ public class PagamentoController {
 
     @PutMapping("/pagamento/{id}")
     public ResponseEntity<Pagamento> update(@PathVariable Long id, @RequestBody Pagamento obj) {
-        String filePath = null;
-        Pagamento pagamento = pagamentoService.update(id, obj, filePath);
+        MultipartFile nota = null;
+        Pagamento pagamento = pagamentoService.update(id, obj, nota);
         return ResponseEntity.ok().body(pagamento);
     }
 
     @PutMapping("/pagamento/upload/{id}")
     public ResponseEntity<Pagamento> upload(@PathVariable Long id,
                                             @RequestParam("pagamento") String pagamentoJson,
-                                           @RequestParam(value = "file", required = false) MultipartFile documento) throws Exception {
+                                           @RequestParam(value = "file", required = false) MultipartFile notaFiscal) throws Exception {
 
         // Convertendo o JSON do produtor em um objeto Produtor
         Pagamento pagamento = new ObjectMapper().readValue(pagamentoJson, Pagamento.class);
 
-
-
-        String filePath = null;
-        if(documento != null && !documento.isEmpty()) {
-            String uploadDir = "uploads/";
-            Path path = Paths.get(uploadDir + documento.getOriginalFilename());
-
-            Files.createDirectories(path.getParent());
-            Files.write(path, documento.getBytes());
-
-            filePath = path.toString();
-        }
-
         // Chamando o serviço para salvar o produtor e os documentos
-        Pagamento obj = pagamentoService.update(id, pagamento, filePath);
+        Pagamento obj = pagamentoService.update(id, pagamento, notaFiscal);
 
         // Retornando o produtor criado com o status HTTP 201
         return ResponseEntity.ok().body(obj);
+    }
+
+    @DeleteMapping("/pagamento/{id}")
+    public ResponseEntity<Pagamento> delete(@PathVariable Long id) {
+        pagamentoService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

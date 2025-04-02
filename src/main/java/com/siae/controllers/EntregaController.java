@@ -89,4 +89,10 @@ public class EntregaController {
         entregaService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/comprovante/pagamento/{id}")
+    public ResponseEntity<Void> desassociarEntregaDePagamento(@PathVariable Long id) {
+        entregaService.desassociarEntregaDePagamento(id);
+        return ResponseEntity.noContent().build();
+    }
 }

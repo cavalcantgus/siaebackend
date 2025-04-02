@@ -3,6 +3,7 @@ package com.siae.services;
 import com.siae.dto.EntregaDTO;
 import com.siae.entities.*;
 import com.siae.repositories.DetalhesEntregaRepository;
+import com.siae.repositories.EntregaPagamentoRepository;
 import com.siae.repositories.EntregaRepository;
 import com.siae.repositories.ProjetoDeVendaRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +25,7 @@ public class EntregaService {
     private final ProjetoDeVendaService projetoDeVendaService;
     private final ProjetoDeVendaRepository projetoDeVendaRepository;
     private final DetalhesEntregaRepository detalhesEntregaRepository;
+    private final EntregaPagamentoRepository entregaPagamentoRepository;
 
     @Autowired
     public EntregaService(EntregaRepository entregaRepository,
@@ -31,7 +33,7 @@ public class EntregaService {
                           ProdutoService produtoService,
                           ProjetoDeVendaService projetoDeVendaService,
                           ProjetoDeVendaRepository projetoDeVendaRepository,
-                          DetalhesEntregaRepository detalhesEntregaRepository) {
+                          DetalhesEntregaRepository detalhesEntregaRepository, EntregaPagamentoRepository entregaPagamentoRepository) {
 
         this.entregaRepository = entregaRepository;
         this.produtorService = produtorService;
@@ -39,7 +41,10 @@ public class EntregaService {
         this.projetoDeVendaService = projetoDeVendaService;
         this.projetoDeVendaRepository = projetoDeVendaRepository;
         this.detalhesEntregaRepository = detalhesEntregaRepository;
-    };
+        this.entregaPagamentoRepository = entregaPagamentoRepository;
+    }
+
+    ;
 
     public List<Entrega> findAll() {
         return entregaRepository.findAll();
@@ -62,13 +67,13 @@ public class EntregaService {
         entrega.setDataDaEntrega(entregaDTO.getDataEntrega());
         entregaRepository.save(entrega);
 
-        if(entregaDTO.getProdutoIds().size() != entregaDTO.getQuantidade().size()) {
+        if (entregaDTO.getProdutoIds().size() != entregaDTO.getQuantidade().size()) {
             throw new IllegalArgumentException("A lista de produtos e a lista de quantidades devem ser iguais");
         }
 
         List<DetalhesEntrega> detalhesEntregas = new ArrayList<>();
 
-        for(int i = 0; i < entregaDTO.getProdutoIds().size(); i++) {
+        for (int i = 0; i < entregaDTO.getProdutoIds().size(); i++) {
             Produto produto = produtoService.findById(entregaDTO.getProdutoIds().get(i));
 
             // Inserir nova instância de DetalhesEntrega
@@ -120,7 +125,7 @@ public class EntregaService {
         novaEntrega.setProdutor(produtor);
         novaEntrega.setDataDaEntrega(payloadEntrega.getDataDaEntrega());
 
-        if(novaEntrega.getDetalhesEntrega().size() == 1 && payloadEntrega.getDetalhesEntrega().size() == 1){
+        if (novaEntrega.getDetalhesEntrega().size() == 1 && payloadEntrega.getDetalhesEntrega().size() == 1) {
             handleSingleDetalhesEntrega(payloadEntrega, novaEntrega, novaEntrega.getDetalhesEntrega().get(0));
         } else {
             handleMultipleDetalhesEntrega(payloadEntrega, novaEntrega);
@@ -145,7 +150,7 @@ public class EntregaService {
                     .noneMatch(detalhesEntrega -> detalhesEntrega.getId().equals(detalhesEntregaAnt.getId()));
 
             System.out.println("Devo Remover: " + shouldRemove);
-            if(shouldRemove){
+            if (shouldRemove) {
                 detalhesEntregaRepository.delete(detalhesEntregaAnt);
             }
 
@@ -153,7 +158,7 @@ public class EntregaService {
         });
 
         payloadEntrega.getDetalhesEntrega().forEach(detalhesEntrega -> {
-            if(detalhesEntrega.getId() == null) {
+            if (detalhesEntrega.getId() == null) {
                 adicionarNovaEntrega(detalhesEntrega, novaEntrega);
             } else {
                 DetalhesEntrega detalhesEntregaExistente = detalhesEntregaRepository.findById(detalhesEntrega.getId())
@@ -165,7 +170,7 @@ public class EntregaService {
 
     private void handleSingleDetalhesEntrega(Entrega payloadEntrega, Entrega novaEntrega, DetalhesEntrega detalhesEntrega) {
         payloadEntrega.getDetalhesEntrega().forEach(entrega -> {
-            if(!entrega.getProduto().getId().equals(detalhesEntrega.getProduto().getId())){
+            if (!entrega.getProduto().getId().equals(detalhesEntrega.getProduto().getId())) {
 
                 detalhesEntregaRepository.delete(detalhesEntrega);
 
@@ -179,7 +184,7 @@ public class EntregaService {
 
 
     private void atualizarEntregaExistente(DetalhesEntrega detalhesEntrega, DetalhesEntrega entrega) {
-        if(detalhesEntrega.getProduto().getId().equals(entrega.getProduto().getId())) {
+        if (detalhesEntrega.getProduto().getId().equals(entrega.getProduto().getId())) {
             BigDecimal quantidadeAnterior = detalhesEntrega.getQuantidade();
             BigDecimal novaQuantidade = entrega.getQuantidade();
             Long produtorId = detalhesEntrega.getEntrega().getProdutor().getId();
@@ -200,7 +205,7 @@ public class EntregaService {
             detalhesEntrega.setQuantidade(novaQuantidade);
             detalhesEntrega.setProduto(produto);
             detalhesEntrega.setTotal(total);
-        }  else {
+        } else {
             Produto produto = produtoService.findById(entrega.getProduto().getId());
 
 //            ProjetoDeVenda projetoDeVenda = projetoDeVendaService.findByProdutorId(entrega.getEntrega().getProdutor().getId());
@@ -242,6 +247,28 @@ public class EntregaService {
 
         novaEntrega.getDetalhesEntrega().add(novoDetalhesEntrega);
         projetoDeVendaRepository.save(projetoDeVenda);
+    }
+
+    @Transactional
+    public void desassociarEntregaDePagamento(Long id) {
+        try {
+            if (entregaRepository.existsById(id)) {
+                EntregaPagamento entregaPagamento = entregaPagamentoRepository.findByEntregaId(id).orElseThrow(() -> new EntityNotFoundException("EntregaPagamento não encontrada"));
+                BigDecimal quantidadeSubtract = entregaPagamento.getEntrega().getQuantidade();
+                BigDecimal valueSubtract = entregaPagamento.getEntrega().getTotal();
+                entregaPagamento.getPagamento().setQuantidade(entregaPagamento.getPagamento().getQuantidade().subtract(quantidadeSubtract));
+                entregaPagamento.getPagamento().setTotal(entregaPagamento.getPagamento().getTotal().subtract(valueSubtract));
+
+                entregaPagamento.getEntrega().setEnviadoParaPagamento(false);
+
+                entregaPagamentoRepository.delete(entregaPagamento);
+
+            } else {
+                throw new EntityNotFoundException("Entrega não encontrada");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteById(Long id) {

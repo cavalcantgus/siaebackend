@@ -1,6 +1,7 @@
 package com.siae.services;
 
 import com.siae.entities.*;
+import com.siae.enums.RoleName;
 import com.siae.enums.StatusPagamento;
 import com.siae.repositories.EntregaPagamentoRepository;
 import com.siae.repositories.NotaFiscalRepository;
@@ -23,13 +24,14 @@ public class PagamentoService {
     private final DocumentoService documentoService;
     private final NotaFiscalService notaFiscalService;
     private final NotaFiscalRepository notaFiscalRepository;
+    private final NotificacaoService notificacaoService;
     private ProdutorRepository produtorRepository;
     private PagamentoRepository pagamentoRepository;
     private EntregaPagamentoRepository entregaPagamentoRepository;
 
     @Autowired
     public PagamentoService(PagamentoRepository pagamentoRepository,
-                            ProdutorRepository produtorRepository, EntregaPagamentoRepository entregaPagamentoRepository, EntregaService entregaService, DocumentoService documentoService, NotaFiscalService notaFiscalService, NotaFiscalRepository notaFiscalRepository) {
+                            ProdutorRepository produtorRepository, EntregaPagamentoRepository entregaPagamentoRepository, EntregaService entregaService, DocumentoService documentoService, NotaFiscalService notaFiscalService, NotaFiscalRepository notaFiscalRepository, NotificacaoService notificacaoService) {
         this.pagamentoRepository = pagamentoRepository;
         this.produtorRepository = produtorRepository;
         this.entregaPagamentoRepository = entregaPagamentoRepository;
@@ -37,6 +39,7 @@ public class PagamentoService {
         this.documentoService = documentoService;
         this.notaFiscalService = notaFiscalService;
         this.notaFiscalRepository = notaFiscalRepository;
+        this.notificacaoService = notificacaoService;
     }
 
     public List<Pagamento> findAll() {
@@ -98,6 +101,8 @@ public class PagamentoService {
             entregaPagamento.setEntrega(entrega);
             entregaPagamentos.add(entregaPagamento);
         }
+        notificacaoService.enviarNotificacaoParaRole("Novos Pagamentos Disponíveis",
+                "Entregas foram enviadas para o pagamento.", RoleName.CENTRAL);
 
         // Salva as relações na tabela intermediária
         entregaPagamentoRepository.saveAll(entregaPagamentos);
@@ -112,6 +117,7 @@ public class PagamentoService {
                 Pagamento pagamentoTarget = pagamentoRepository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado"));
                 updateData(pagamento, pagamentoTarget, notaFiscal);
+
                 return pagamentoRepository.save(pagamentoTarget);
             } else {
                 throw new EntityNotFoundException("Contrato não encontrado");

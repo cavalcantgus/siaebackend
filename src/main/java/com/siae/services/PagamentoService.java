@@ -81,6 +81,7 @@ public class PagamentoService {
                     pagamento.setProdutor(produtor);
                     pagamento.setQuantidade(BigDecimal.ZERO);
                     pagamento.setTotal(BigDecimal.ZERO);
+                    pagamento.setData(LocalDate.now());
                     pagamento.setStatus(StatusPagamento.AGUARDANDO_NF);
                 }
 
@@ -127,19 +128,21 @@ public class PagamentoService {
         pagamentoTarget.setQuantidade(pagamento.getQuantidade());
         pagamentoTarget.setTotal(pagamento.getTotal());
 
-        NotaFiscal nota;
-        NotaFiscal notaFiscalExistente = notaFiscalRepository.findByPagamentoId(pagamentoTarget.getId());
+        if(notaFiscal != null) {
+            NotaFiscal nota;
+            NotaFiscal notaFiscalExistente = notaFiscalRepository.findByPagamentoId(pagamentoTarget.getId());
 
-        if (notaFiscalExistente != null) {
-            // Atualiza a nota fiscal existente
-            nota = notaFiscalService.update(notaFiscal, pagamentoTarget);
-        } else {
-            // Insere uma nova nota fiscal
-            nota = notaFiscalService.insert(notaFiscal, pagamentoTarget);
+            if (notaFiscalExistente != null) {
+                // Atualiza a nota fiscal existente
+                nota = notaFiscalService.update(notaFiscal, pagamentoTarget);
+            } else {
+                // Insere uma nova nota fiscal
+                nota = notaFiscalService.insert(notaFiscal, pagamentoTarget);
+            }
+            // Certifique-se de definir a nota fiscal no pagamentoTarget
+            pagamentoTarget.setNotaFiscal(nota);
         }
-        // Certifique-se de definir a nota fiscal no pagamentoTarget
-        pagamentoTarget.setNotaFiscal(nota);
-
+        
         if (pagamento.getStatus() != null) {
             try {
                 StatusPagamento statusPagamento = StatusPagamento.valueOf(pagamento.getStatus().name());

@@ -102,7 +102,7 @@ public class PagamentoService {
             entregaPagamentos.add(entregaPagamento);
         }
         notificacaoService.enviarNotificacaoParaRole("Novos Pagamentos Disponíveis",
-                "Entregas foram enviadas para o pagamento.", RoleName.CENTRAL);
+                "Entregas foram enviadas para o pagamento.", RoleName.PAGAMENTO);
 
         // Salva as relações na tabela intermediária
         entregaPagamentoRepository.saveAll(entregaPagamentos);

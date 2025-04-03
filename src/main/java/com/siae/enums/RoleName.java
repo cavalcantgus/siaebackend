@@ -8,5 +8,6 @@ public enum RoleName {
 	CPL,
 	COORDENADOR,
 	SECRETARIO,
-	CENTRAL
+	CENTRAL,
+	PAGAMENTO
 }

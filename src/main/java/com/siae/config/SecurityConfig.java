@@ -1,5 +1,7 @@
 package com.siae.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -34,13 +37,14 @@ public class SecurityConfig {
     private CustomPasswordEncoder customPasswordEncoder;
     
     @SuppressWarnings("removal")
-	@Bean
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(requests -> {
                     requests.requestMatchers("/admin/**").hasAuthority("ADMIN");
-                    requests.requestMatchers("/login/auth", "/public/**").permitAll();
+                    requests.requestMatchers("/login/auth").permitAll();
+                    requests.requestMatchers("/public/**").authenticated();
                     try {
                         requests.anyRequest().permitAll().and().cors(withDefaults());
                     } catch (Exception e) {
@@ -48,9 +52,19 @@ public class SecurityConfig {
                     }
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint()) // Adiciona tratamento de erro 401
+                )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.AuthenticationException authException) -> {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou ausente");
+        };
     }
     
 	@Autowired 

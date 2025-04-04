@@ -17,7 +17,7 @@ import io.jsonwebtoken.security.Keys;
 public class JwtUtil {
 	
 	 private final Key key;
-	 private static final int TIME_EXPIRATION = 10000;
+	 private static final int TIME_EXPIRATION = 86400000;
 
 	 public JwtUtil(@Value("${api.security.token.secret}") String secretKey) {
 		 this.key = Keys.hmacShaKeyFor(secretKey.getBytes());

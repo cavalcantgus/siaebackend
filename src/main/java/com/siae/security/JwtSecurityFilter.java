@@ -2,6 +2,7 @@ package com.siae.security;
 
 import java.io.IOException;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +23,7 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private static final String UNAUTHORIZED_MESSAGE = "Token inválido ou expirado";
 
     public JwtSecurityFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
@@ -47,8 +49,12 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
 
             try {
                 username = jwtUtil.extractUsername(jwt);
-            } catch (Exception e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou expirado");
+            } catch (ExpiredJwtException e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expirado. Faça login novamente");
+                return;
+            }
+            catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
                 return;
             }
 
@@ -61,12 +67,12 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 } else {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
                     return;
                 }
             }
         } else {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token não fornecido");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
             return;
         }
 

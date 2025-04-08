@@ -13,6 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("*")  // Permitir o front-end
                 .exposedHeaders("Authorization")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")  // Métodos permitidos
-                .allowedHeaders("*");  // Cabeçalhos permitidos
+                .allowedHeaders("*")
+                .exposedHeaders("Content-Disposition");;  // Cabeçalhos permitidos
     }
 }

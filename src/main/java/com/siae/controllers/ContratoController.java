@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -41,10 +43,12 @@ public class ContratoController {
         Contrato contrato = contratoService.findById(id);
         byte[] pdfBytes = contratoPDF.createPdf(contrato);
 
+        String fileName = "contrato_" + contrato.getProdutor().getNome() + ".pdf";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment",
-                "contrato_" + contrato.getProdutor().getNome() + ".pdf");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName);
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }

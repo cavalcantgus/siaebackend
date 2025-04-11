@@ -2,29 +2,32 @@ package com.siae.controllers;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import com.siae.dto.UserDTO;
+import com.siae.entities.ConfirmationToken;
+import com.siae.exception.EmailAlreadyExists;
+import com.siae.services.ConfirmationTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.siae.entities.User;
 import com.siae.services.UserService;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Controller
 @RequestMapping("/public/users")
 public class UserController {
 	
 	@Autowired UserService service;
-	
+    @Autowired
+    private ConfirmationTokenService confirmationTokenService;
+
 	@GetMapping
 	public ResponseEntity<List<User>> findAll() {
 		List<User> users = service.findAll();
@@ -36,7 +39,32 @@ public class UserController {
 		User user = service.findById(id);
 		return ResponseEntity.ok().body(user);
 	}
-	
+
+	@GetMapping("/confirm-email")
+	public ResponseEntity<?> email(@RequestParam String token) {
+		try {
+			ConfirmationToken confirmationToken = confirmationTokenService.getValidToken(token);
+			confirmationTokenService.confirmToken(confirmationToken);
+
+			URI redirectUri = URI.create("http://localhost:5173/siaefrontend/confirmed-email?token=" + confirmationToken.getToken());
+			HttpHeaders headers = new HttpHeaders();
+			headers.setLocation(redirectUri);
+			return new ResponseEntity<>(headers, HttpStatus.FOUND);
+		} catch (IllegalStateException e) {
+			URI redirectUri = URI.create("http://localhost:5173/siaefrontend/invalid-token?reason=expired");
+			HttpHeaders headers = new HttpHeaders();
+			headers.setLocation(redirectUri);
+			return new ResponseEntity<>(headers, HttpStatus.FOUND);
+		}
+	}
+
+	@ExceptionHandler(EmailAlreadyExists.class)
+	public ResponseEntity<?> handleEmailAlreadyExists(EmailAlreadyExists ex) {
+		return ResponseEntity
+				.status(HttpStatus.CONFLICT)
+				.body(Map.of("error", ex.getMessage()));
+	}
+
 	@PostMapping("/register")
 	public ResponseEntity<User> insert(@RequestBody User obj) {
 		User user = service.insert(obj);

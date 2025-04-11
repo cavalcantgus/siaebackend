@@ -1,9 +1,15 @@
 package com.siae.services;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+import com.siae.entities.ConfirmationToken;
+import com.siae.exception.EmailAlreadyExists;
+import jakarta.mail.MessagingException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +31,13 @@ public class UserService {
 	
 	@Autowired
 	private CustomPasswordEncoder encoder;
-	
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private VerificationTokenService verificationTokenService;
+    @Autowired
+    private ConfirmationTokenService confirmationTokenService;
+
 	public List<User> findAll() {
 		return userRepository.findAll();
 	}
@@ -38,14 +50,40 @@ public class UserService {
 		Optional<User> user = userRepository.findById(id);
 		return user.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 	}
+
+	@Transactional
+	public void enableUser(User user) {
+		user.setEnabled(true);
+		userRepository.save(user);
+	}
 	
 	public User insert(User user) {
+		if(userRepository.existsByEmail(user.getEmail())) {
+			throw new EmailAlreadyExists("Email já cadastrado. Tente outro ou verifique sua caixa de entrada.");
+		}
 		String roleNameInput = "PENDENTE";
 		RoleName roleName = RoleName.valueOf(roleNameInput); 
 		Role pendingRole = roleRepository.findByName(roleName);
 		user.setRoles(Set.of(pendingRole));
+
 		user.setPassword(encoder.passwordEnconder().encode(user.getPassword()));
-		return userRepository.save(user);
+		User savedUser = userRepository.save(user);
+
+		ConfirmationToken confirmationToken = confirmationTokenService.generateToken(user);
+
+		String link = null;
+        try {
+            link = verificationTokenService.buildVerificationLink(confirmationToken.getToken(),
+					user.getUsername());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            emailService.sendEmail(user.getEmail(), "Confirmação de Email", link);
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+        return savedUser;
 	}
 
 	public User update(Long id, User user, String role) {

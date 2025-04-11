@@ -42,15 +42,15 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(requests -> {
-                    requests.requestMatchers("/admin/**").hasAuthority("ADMIN");
-                    requests.requestMatchers("/login/auth").permitAll();
-                    requests.requestMatchers("/public/**").authenticated();
-                    try {
-                        requests.anyRequest().permitAll().and().cors(withDefaults());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    requests
+                            .requestMatchers("/admin/**").hasAuthority("ADMIN") // protegido
+                            .requestMatchers("/login/**").permitAll()
+                            .requestMatchers("/public/users/confirm-email").permitAll()// público
+                            .requestMatchers("/public/users/register").permitAll() // deve ser público
+                            .requestMatchers("/public/**").authenticated()      // o resto de /public exige token
+                            .anyRequest().denyAll();                            // nega tudo que não foi tratado
                 })
+                .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint()) // Adiciona tratamento de erro 401

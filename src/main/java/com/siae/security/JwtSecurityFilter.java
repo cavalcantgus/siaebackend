@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.siae.utils.JwtUtil;
@@ -34,13 +35,14 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
 
-        if (path.startsWith("/login/auth")) {
+        if (path.startsWith("/login") ||
+                path.startsWith("/public/users/register") ||
+                path.startsWith("/public/users/confirm-email")) {
             filterChain.doFilter(request, response);
             return;
         }
-
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

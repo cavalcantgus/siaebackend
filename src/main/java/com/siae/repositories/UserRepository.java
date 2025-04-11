@@ -10,4 +10,5 @@ import com.siae.enums.RoleName;
 public interface UserRepository extends JpaRepository<User, Long>{
 	User findByUsername(String username);
 	List<User> findByRoles_Name(RoleName roleName);
+	Boolean existsByEmail(String email);
 }

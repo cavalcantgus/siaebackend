@@ -7,6 +7,7 @@ import com.siae.relatorios.ComprovanteDeRecebimento;
 import com.siae.relatorios.EntregaMensal;
 import com.siae.services.EntregaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +49,20 @@ public class EntregaController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "relatorio.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("relatorio/visualize/{id}")
+    public ResponseEntity<?> visualizePdf(@PathVariable Long id) {
+        Entrega entrega = entregaService.findById(id);
+        byte[] pdfBytes = comprovanteService.createPdf(entrega);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.inline()
+                .filename("relatorio.pdf")
+                .build());
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }

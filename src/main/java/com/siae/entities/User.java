@@ -27,6 +27,7 @@ public class User {
 	private String email;
 
 	private String password;
+	private String cpf;
 	private boolean enabled = false;
 
 	@ManyToMany(fetch = FetchType.EAGER)

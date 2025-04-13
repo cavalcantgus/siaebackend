@@ -46,12 +46,13 @@ public class UserController {
 			ConfirmationToken confirmationToken = confirmationTokenService.getValidToken(token);
 			confirmationTokenService.confirmToken(confirmationToken);
 
-			URI redirectUri = URI.create("http://localhost:5173/siaefrontend/confirmed-email?token=" + confirmationToken.getToken());
+			URI redirectUri =
+					URI.create("https://www.siaeserver.com/siaefrontend/confirmed-email?token=" + confirmationToken.getToken());
 			HttpHeaders headers = new HttpHeaders();
 			headers.setLocation(redirectUri);
 			return new ResponseEntity<>(headers, HttpStatus.FOUND);
 		} catch (IllegalStateException e) {
-			URI redirectUri = URI.create("http://localhost:5173/siaefrontend/invalid-token?reason=expired");
+			URI redirectUri = URI.create("https://www.siaeserver.com/siaefrontend/invalid-token?reason=expired");
 			HttpHeaders headers = new HttpHeaders();
 			headers.setLocation(redirectUri);
 			return new ResponseEntity<>(headers, HttpStatus.FOUND);

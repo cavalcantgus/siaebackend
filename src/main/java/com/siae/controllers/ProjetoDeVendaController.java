@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,21 @@ public class ProjetoDeVendaController {
 		
 		return ResponseEntity.ok().headers(headers).body(pdfBytes);
 		
+	}
+
+	@GetMapping("/relatorio/visualize/{id}")
+	public ResponseEntity<?> visualizePdf(@PathVariable Long id) {
+		ProjetoDeVenda projeto = service.findById(id);
+		byte[] pdfBytes = pdfService.createPdf(projeto);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_PDF);
+		headers.setContentDisposition(ContentDisposition.inline()
+				.filename(projeto.getProdutor().getNome().toLowerCase() + ".pdf")
+				.build());
+
+		return ResponseEntity.ok().headers(headers).body(pdfBytes);
+
 	}
 
 	@GetMapping("/projeto/{id}")

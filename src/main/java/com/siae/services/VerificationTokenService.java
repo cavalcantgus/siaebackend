@@ -17,7 +17,7 @@ public class VerificationTokenService {
                 StandardCharsets.UTF_8
         );
 
-        String link = "http://localhost:8080/public/users/confirm-email?token=" + token;
+        String link = "https://siaeserver.com/public/users/confirm-email?token=" + token;
         String htmlLink = html.replace("${confirmationUrl}", link);
         htmlLink = htmlLink.replace("${userName}", username);
         return htmlLink;

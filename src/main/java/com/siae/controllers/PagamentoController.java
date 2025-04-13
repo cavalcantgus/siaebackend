@@ -9,6 +9,7 @@ import com.siae.relatorios.EntregaMensalProdutor;
 import com.siae.services.PagamentoService;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +51,19 @@ public class PagamentoController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "comprovante.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+    @GetMapping("relatorio/visualize/{id}")
+    public ResponseEntity<?> visualizeRelatorioMensalPdf(@PathVariable Long id) {
+        Pagamento pagamento = pagamentoService.findById(id);
+        byte[] pdfBytes = entregaMensalProdutor.createPdf(pagamento);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.inline()
+                .filename("comprovante.pdf")
+                .build());
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }

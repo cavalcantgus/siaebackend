@@ -1,6 +1,8 @@
 # Use a imagem base do OpenJDK
 FROM openjdk:17-jdk-alpine
 
+RUN apk add --no-cache ca-certificates && update-ca-certificates
+
 # Crie o diretório da aplicação
 RUN mkdir -p /app
 

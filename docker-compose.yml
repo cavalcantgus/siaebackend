@@ -20,6 +20,7 @@ services:
   networks:
    - mynetwork
    
+   
  db:
   image: mysql:8.0.31
   container_name: mysql-db
@@ -50,6 +51,15 @@ services:
    MYSQL_ROOT_PASSWORD: admin
   networks:
    - mynetwork
+
+ rabbitmq:
+  image: rabbitmq:3-management
+  container_name: rabbitmq
+  ports:
+    - "5672:5672"      # Porta padrão usada pelo Spring
+    - "15672:15672"    # Painel Web
+  networks:
+    - mynetwork
   
 volumes:
  db-data:

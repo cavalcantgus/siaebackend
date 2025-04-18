@@ -5,6 +5,7 @@ import com.siae.entities.Entrega;
 import com.siae.entities.ProjetoDeVenda;
 import com.siae.relatorios.ComprovanteDeRecebimento;
 import com.siae.relatorios.EntregaMensal;
+import com.siae.relatorios.RelacaoEntregaProdutor;
 import com.siae.services.EntregaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
@@ -24,15 +25,17 @@ public class EntregaController {
     private final EntregaService entregaService;
     private final ComprovanteDeRecebimento comprovanteService;
     private final EntregaMensal entregaMensalService;
+    private final RelacaoEntregaProdutor relacaoEntregaProdutor;
 
     @Autowired
     public EntregaController(EntregaService entregaService,
                              ComprovanteDeRecebimento comprovanteService,
-                             EntregaMensal entregaMensalService) {
+                             EntregaMensal entregaMensalService, RelacaoEntregaProdutor relacaoEntregaProdutor) {
 
         this.entregaService = entregaService;
         this.comprovanteService = comprovanteService;
         this.entregaMensalService = entregaMensalService;
+        this.relacaoEntregaProdutor = relacaoEntregaProdutor;
     }
 
     @GetMapping
@@ -73,6 +76,20 @@ public class EntregaController {
         return ResponseEntity.ok().body(entregas);
     }
 
+    @GetMapping("/relatorio/mensal/produtor/generate/{mes}/{ano}/{produtorId}")
+    public ResponseEntity<?> generateRelatorioMensalProdutorPdf(@PathVariable String mes,
+                                                         @PathVariable String ano, @PathVariable Long produtorId) {
+        List<Entrega> entregas = entregaService.findByProdutorId(produtorId);
+        System.out.println("ENTREGAS: " + entregas.size());
+        byte[] pdfBytes = relacaoEntregaProdutor.createPdf(entregas, mes, ano);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "relatorioMensal.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
     @GetMapping("relatorio/mensal/generate/{mes}/{ano}")
     public ResponseEntity<?> generateRelatorioMensalPdf(@PathVariable String mes, @PathVariable String ano) {
         List<Entrega> entregas = entregaService.findAll();
@@ -81,6 +98,22 @@ public class EntregaController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "relatorioMensal.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/relatorio/mensal/visualize/{mes}/{ano}")
+    public ResponseEntity<?> generateRelatorioMensalVisualizePdf(@PathVariable String mes,
+                                                                 @PathVariable String ano,
+                                                                 @PathVariable Long produtorId) {
+        List<Entrega> entregas = entregaService.findByProdutorId(produtorId);
+        byte[] pdfBytes = entregaMensalService.createPdf(entregas, mes, ano);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.inline()
+                .filename("relatorio.pdf")
+                .build());
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }

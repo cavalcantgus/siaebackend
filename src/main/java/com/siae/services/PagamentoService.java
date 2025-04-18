@@ -51,6 +51,11 @@ public class PagamentoService {
         return pagamento.orElseThrow(() -> new EntityNotFoundException("Pagamento não encontrado"));
     }
 
+    public List<Pagamento> findByProdutorId(Long produtorId) {
+        List<Pagamento>  pagamentos = pagamentoRepository.findByProdutorId(produtorId);
+        return pagamentos;
+    }
+
     @Transactional
     public List<Pagamento> sendToPayment(List<Entrega> entregas) {
         if (entregas.isEmpty()) {
@@ -59,11 +64,16 @@ public class PagamentoService {
 
         List<EntregaPagamento> entregaPagamentos = new ArrayList<>();
         Map<String, Pagamento> pagamentosMap = new HashMap<>();
+        Map<Long, List<Entrega>> entregasPorProdutor = new HashMap<>();
 
         for (Entrega entrega : entregas) {
             Entrega entregaGerenciada = entregaService.findById(entrega.getId());
             entregaGerenciada.setEnviadoParaPagamento(true);
             Produtor produtor = entrega.getProdutor();
+            Long produtorId = produtor.getId();
+
+            entregasPorProdutor.computeIfAbsent(produtorId, k -> new ArrayList<>()).add(entrega);
+
             int ano = entrega.getDataDaEntrega().getYear();
             int mes = entrega.getDataDaEntrega().getMonthValue();
 
@@ -73,20 +83,14 @@ public class PagamentoService {
             Pagamento pagamento = pagamentosMap.get(key);
 
             if (pagamento == null) {
-                // Busca no banco apenas se ainda não estiver no mapa
-                pagamento = pagamentoRepository.findByProdutorAndAnoAndMes(produtor, ano, mes);
+                // Sempre cria um novo pagamento, não importa se já existe no banco
+                pagamento = new Pagamento();
 
-                if (pagamento == null) {
-                    // Se não existir, cria um novo
-                    System.out.println("Não existe");
-                    pagamento = new Pagamento();
-
-                    pagamento.setProdutor(produtor);
-                    pagamento.setQuantidade(BigDecimal.ZERO);
-                    pagamento.setTotal(BigDecimal.ZERO);
-                    pagamento.setData(LocalDate.now());
-                    pagamento.setStatus(StatusPagamento.AGUARDANDO_NF);
-                }
+                pagamento.setProdutor(produtor);
+                pagamento.setQuantidade(BigDecimal.ZERO);
+                pagamento.setTotal(BigDecimal.ZERO);
+                pagamento.setData(LocalDate.now());
+                pagamento.setStatus(StatusPagamento.AGUARDANDO_NF);
 
                 pagamentosMap.put(key, pagamento);
             }
@@ -101,6 +105,11 @@ public class PagamentoService {
             entregaPagamento.setEntrega(entrega);
             entregaPagamentos.add(entregaPagamento);
         }
+
+        for(Map.Entry<Long, List<Entrega>> entry : entregasPorProdutor.entrySet()) {
+            notificacaoService.enviarNotificacaoParaUsuario(entry.getKey(), entry.getValue().size());
+        }
+
         notificacaoService.enviarNotificacaoParaRole("Novos Pagamentos Disponíveis",
                 "Entregas foram enviadas para o pagamento.", RoleName.PAGAMENTO);
 

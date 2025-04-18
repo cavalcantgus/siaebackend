@@ -51,6 +51,10 @@ public class UserService {
 		return user.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 	}
 
+	public User findByCpf(String cpf) {
+		return userRepository.findByCpf(cpf);
+	}
+
 	@Transactional
 	public void enableUser(User user) {
 		user.setEnabled(true);

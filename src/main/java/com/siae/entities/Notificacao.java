@@ -33,6 +33,6 @@ public class Notificacao {
     private LocalDate data;
 
     @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(name = "role_id", nullable = true)
     private Role role;
 }

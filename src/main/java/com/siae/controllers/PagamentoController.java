@@ -1,10 +1,7 @@
 package com.siae.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.siae.entities.Ata;
-import com.siae.entities.Entrega;
-import com.siae.entities.Pagamento;
-import com.siae.entities.Produtor;
+import com.siae.entities.*;
 import com.siae.relatorios.EntregaMensalProdutor;
 import com.siae.services.PagamentoService;
 import org.apache.coyote.Response;
@@ -40,6 +37,12 @@ public class PagamentoController {
     @GetMapping
     public ResponseEntity<List<Pagamento>> findAll(){
         List<Pagamento> pagamentos = pagamentoService.findAll();
+        return ResponseEntity.ok().body(pagamentos);
+    }
+
+    @GetMapping("/pagamento/{id}")
+    public ResponseEntity<List<Pagamento>> findByProdutorId(@PathVariable Long id) {
+        List<Pagamento> pagamentos = pagamentoService.findByProdutorId(id);
         return ResponseEntity.ok().body(pagamentos);
     }
 

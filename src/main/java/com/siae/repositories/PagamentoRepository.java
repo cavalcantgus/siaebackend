@@ -13,4 +13,5 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     Pagamento findByProdutorAndAnoAndMes(@Param("produtor") Produtor produtor,
                                                @Param("ano") int ano,
                                                @Param("mes") int mes);
+    List<Pagamento> findByProdutorId(Long produtorId);
 }

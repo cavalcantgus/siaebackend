@@ -24,7 +24,10 @@ public class NotificacaoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<List<Notificacao>> buscarNotificacaoPorUsuario(@PathVariable long id) {
+        System.out.println("User ID" +  id);
         List<Notificacao> notificacoes = notificacaoService.buscarNotificacoesPorUsuario(id);
+        System.out.println("Notificações" +  notificacoes);
+
         return ResponseEntity.ok().body(notificacoes);
     }
 }

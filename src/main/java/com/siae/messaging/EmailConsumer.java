@@ -21,8 +21,7 @@ public class EmailConsumer {
     public void consume(EmailMessage emailMessage) {
         try {
             String html = new String(
-                    getClass().getClassLoader().getResourceAsStream("templates/notification" +
-                            "-entrega.html").readAllBytes(),
+                    getClass().getClassLoader().getResourceAsStream("templates/" + emailMessage.getTemplateName()).readAllBytes(),
                     StandardCharsets.UTF_8
             );
             String link = "http://localhost:5173/siaefrontend/login";

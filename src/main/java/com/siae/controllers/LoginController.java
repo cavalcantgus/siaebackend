@@ -36,10 +36,11 @@ public class LoginController {
     public ResponseEntity<?> authenticate(@RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+                            loginRequest.getPassword())
             );
 
-            User user = userRepository.findByUsername(loginRequest.getUsername());
+            User user = userRepository.findByEmail(loginRequest.getEmail());
 
             String role = authentication.getAuthorities().stream()
                     .findFirst()
@@ -54,6 +55,8 @@ public class LoginController {
                             "username", user.getUsername(),
                             "email", user.getEmail(),
                             "cpf", user.getCpf(),
+                            "completeName", user.getCompleteName(),
+                            "dataDeCadastro", user.getDataDeCadastro(),
                             "role", role
                     )
             ));

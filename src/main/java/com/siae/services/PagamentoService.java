@@ -127,6 +127,9 @@ public class PagamentoService {
                         .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado"));
                 updateData(pagamento, pagamentoTarget, notaFiscal);
 
+                if(pagamentoTarget.getStatus().equals(StatusPagamento.EFETUADO)){
+                    notificacaoService.notificacaoPagamentoEfetuado(pagamento.getProdutor());
+                }
                 return pagamentoRepository.save(pagamentoTarget);
             } else {
                 throw new EntityNotFoundException("Contrato não encontrado");

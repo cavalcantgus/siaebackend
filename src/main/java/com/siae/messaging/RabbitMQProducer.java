@@ -19,8 +19,8 @@ public class RabbitMQProducer {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void sendMessage(String message, String to, String subject, String username) {
-        EmailMessage emailMessage = new EmailMessage(to, subject, message, username);
+    public void sendMessage(String message, String to, String subject, String username, String templateName) {
+        EmailMessage emailMessage = new EmailMessage(to, subject, message, username, templateName);
         rabbitTemplate.convertAndSend(exchange, routingKey, emailMessage);
         System.out.println("Message sent to RabbitMQ: " + message);
     }

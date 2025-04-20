@@ -1,6 +1,7 @@
 package com.siae.services;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -71,6 +72,7 @@ public class UserService {
 		user.setRoles(Set.of(pendingRole));
 
 		user.setPassword(encoder.passwordEnconder().encode(user.getPassword()));
+		user.setDataDeCadastro(LocalDate.now());
 		User savedUser = userRepository.save(user);
 
 		ConfirmationToken confirmationToken = confirmationTokenService.generateToken(user);

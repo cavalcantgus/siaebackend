@@ -114,8 +114,33 @@ public class NotificacaoService {
             notificacaoUsuarioRepository.save(notificacaoUsuario);
 
             rabbitMQProducer.sendMessage("Você tem novas entregas enviadas para o pagamento",
-                    user.getEmail(), "Entregas enviadas para pagamento", user.getUsername());
+                    user.getEmail(), "Entregas enviadas para pagamento", user.getUsername(),
+                    "notification-entrega.html");
         }
 
+    }
+
+
+    public void notificacaoPagamentoEfetuado(Produtor produto){
+        User user = userService.findByCpf(produto.getCpf());
+        String titulo = "Pagamento efetuado";
+
+        if(user != null) {
+            Notificacao notificacao = new Notificacao();
+            notificacao.setTitulo(titulo);
+            notificacao.setMensagem("Você tem pagamento com status EFETUADO");
+            notificacao.setData(LocalDate.now());
+            notificacaoRepository.save(notificacao);
+
+            NotificacaoUsuario notificacaoUsuario = new NotificacaoUsuario();
+            notificacaoUsuario.setUsuario(user);
+            notificacaoUsuario.setNotificacao(notificacao);
+            notificacaoUsuario.setData(LocalDate.now());
+            notificacaoUsuarioRepository.save(notificacaoUsuario);
+
+            rabbitMQProducer.sendMessage("Você tem pagamento com status EFETUADO",
+                    user.getEmail(), "Entregas enviadas para pagamento", user.getUsername(),
+                    "pagamento-efetuado.html");
+        }
     }
 }

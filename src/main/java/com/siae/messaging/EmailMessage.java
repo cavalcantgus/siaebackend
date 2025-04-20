@@ -18,4 +18,5 @@ public class EmailMessage {
     private String subject;
     private String body;
     private String username;
+    private String templateName;
 }

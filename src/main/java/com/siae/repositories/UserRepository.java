@@ -1,6 +1,7 @@
 package com.siae.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,5 +13,5 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	User findByEmail(String email);
 	List<User> findByRoles_Name(RoleName roleName);
 	Boolean existsByEmail(String email);
-	User findByCpf(String cpf);
+	Optional<User> findByCpf(String cpf);
 }

@@ -55,6 +55,7 @@ public class ProdutorService {
         return savedProdutor;
     }
 
+    
     public Produtor update(Long id, Produtor produtor, List<MultipartFile> documentos) {
         if (!produtorRepository.existsById(id)) {
             throw new EntityNotFoundException("Produtor não encontrado");

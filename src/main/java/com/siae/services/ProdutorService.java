@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.siae.mappers.ProductorMapper;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +44,7 @@ public class ProdutorService {
         return produtor.orElseThrow(() -> new EntityNotFoundException("Erro"));
     }
 
+    @Transactional
     public Produtor insert(Produtor produtor, List<MultipartFile> documentos) {
         Produtor savedProdutor = produtorRepository.save(produtor);
         if (documentos != null) {
@@ -55,9 +57,6 @@ public class ProdutorService {
         return savedProdutor;
     }
 
-
-
-    
     public Produtor update(Long id, Produtor produtor, List<MultipartFile> documentos) {
         if (!produtorRepository.existsById(id)) {
             throw new EntityNotFoundException("Produtor não encontrado");
@@ -78,6 +77,10 @@ public class ProdutorService {
         }
 
         return produtorRepository.save(produtorTarget);
+    }
 
+    private void deleteById(Long id) {
+        if(produtorRepository.existsById(id)) throw new EntityNotFoundException("Produtor não encontrado");
+        produtorRepository.deleteById(id);
     }
 }

@@ -79,7 +79,7 @@ public class ProdutorService {
         return produtorRepository.save(produtorTarget);
     }
 
-    private void deleteById(Long id) {
+    public void deleteById(Long id) {
         if(produtorRepository.existsById(id)) throw new EntityNotFoundException("Produtor não encontrado");
         produtorRepository.deleteById(id);
     }

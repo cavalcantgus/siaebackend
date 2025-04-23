@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.siae.entities.ConfirmationToken;
 import com.siae.exception.EmailAlreadyExists;
+import com.siae.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -98,8 +99,7 @@ public class UserService {
     }
 
     public void delete(Long id) {
-        if (!userRepository.existsById(id))
-            throw new EntityNotFoundException("Usuário não encontrado");
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
+        userRepository.delete(user);
     }
 } 

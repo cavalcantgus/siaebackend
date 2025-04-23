@@ -16,10 +16,14 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProdutoService {
 	
+	private final ProdutoRepository repository;
+    private final ProductMapper productMapper;
+
 	@Autowired
-	private ProdutoRepository repository;
-    @Autowired
-    private ProductMapper productMapper;
+	public ProdutoService(ProdutoRepository repository, ProductMapper productMapper) {
+		this.repository = repository;
+		this.productMapper = productMapper;
+	}
 
 	public List<Produto> findAll() {
 		return repository.findAll();
@@ -43,8 +47,7 @@ public class ProdutoService {
 	}
 	
 	public void deleteById(Long id) {
-		Produto produto =  repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Produto"
-				, id));
+		Produto produto =  repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Produto", id));
 		repository.delete(produto);
 	}
 }

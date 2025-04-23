@@ -3,6 +3,7 @@ package com.siae.services;
 import java.util.List;
 import java.util.Optional;
 
+import com.siae.exception.ResourceNotFoundException;
 import com.siae.mappers.ProductorMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,10 +34,6 @@ public class ProdutorService {
 
     public List<Produtor> findAll() {
         return produtorRepository.findAll();
-    }
-
-    public List<Documento> findAllDocumentoProdutor(Produtor produtor) {
-        return documentoService.findByProdutor(produtor);
     }
 
     public Produtor findById(Long id) {
@@ -80,7 +77,7 @@ public class ProdutorService {
     }
 
     public void deleteById(Long id) {
-        if(produtorRepository.existsById(id)) throw new EntityNotFoundException("Produtor não encontrado");
-        produtorRepository.deleteById(id);
+        Produtor produtor = produtorRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Produtor", id));
+        produtorRepository.delete(produtor);
     }
 }

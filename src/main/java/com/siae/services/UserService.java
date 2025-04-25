@@ -1,16 +1,11 @@
 package com.siae.services;
 
-import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 
 import com.siae.entities.ConfirmationToken;
 import com.siae.exception.EmailAlreadyExists;
-import jakarta.mail.MessagingException;
-import jakarta.transaction.Transactional;
+import com.siae.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,133 +21,85 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class UserService {
 
-	@Autowired UserRepository userRepository;
-	
-	@Autowired RoleRepository roleRepository;
-	
-	@Autowired
-	private CustomPasswordEncoder encoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final CustomPasswordEncoder encoder;
+    private final ConfirmationTokenService confirmationTokenService;
+    private final UserRegistrationService userRegistrationService;
+
     @Autowired
-    private EmailService emailService;
-    @Autowired
-    private VerificationTokenService verificationTokenService;
-    @Autowired
-    private ConfirmationTokenService confirmationTokenService;
+    public UserService(UserRepository userRepository,
+					   RoleRepository roleRepository,
+                       CustomPasswordEncoder encoder,
+					   ConfirmationTokenService confirmationTokenService,
+					   UserRegistrationService userRegistrationService) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.encoder = encoder;
+        this.confirmationTokenService = confirmationTokenService;
+        this.userRegistrationService = userRegistrationService;
+    }
 
-	public List<User> findAll() {
-		return userRepository.findAll();
-	}
-	
-	public List<User> findUsersByRole(RoleName roleName) {
-		return userRepository.findByRoles_Name(roleName);
-	}
-	
-	public User findById(Long id) {
-		Optional<User> user = userRepository.findById(id);
-		return user.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-	}
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
 
-	public User findByCpf(String cpf) {
-		return userRepository.findByCpf(cpf);
-	}
+    public List<User> findUsersByRole(RoleName roleName) {
+        return userRepository.findByRoles_Name(roleName);
+    }
 
-	@Transactional
-	public void enableUser(User user) {
-		user.setEnabled(true);
-		userRepository.save(user);
-	}
-	
-	public User insert(User user) {
-		if(userRepository.existsByEmail(user.getEmail())) {
-			throw new EmailAlreadyExists("Email já cadastrado. Tente outro ou verifique sua caixa de entrada.");
-		}
-		String roleNameInput = "PENDENTE";
-		RoleName roleName = RoleName.valueOf(roleNameInput); 
-		Role pendingRole = roleRepository.findByName(roleName);
-		user.setRoles(Set.of(pendingRole));
+    public User findById(Long id) {
+        Optional<User> user = userRepository.findById(id);
+        return user.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
 
-		user.setPassword(encoder.passwordEnconder().encode(user.getPassword()));
-		user.setDataDeCadastro(LocalDate.now());
-		User savedUser = userRepository.save(user);
+    public User findByCpf(String cpf) {
+		if(cpf == null || cpf.isEmpty()) throw new IllegalArgumentException("Cpf não pode ser nulo");
+        return userRepository.findByCpf(cpf).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
 
-		ConfirmationToken confirmationToken = confirmationTokenService.generateToken(user);
-
-		String link = null;
-        try {
-            link = verificationTokenService.buildVerificationLink(confirmationToken.getToken(),
-					user.getUsername());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public User insert(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new EmailAlreadyExists("Email já cadastrado. Tente outro ou verifique sua caixa de entrada.");
         }
-        try {
-            emailService.sendEmail(user.getEmail(), "Confirmação de Email", link);
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
-        }
+
+        User preparedUser = userRegistrationService.prepareUserForRegistration(user);
+        User savedUser = userRepository.save(preparedUser);
+        ConfirmationToken confirmationToken = confirmationTokenService.generateToken(savedUser);
+        userRegistrationService.sendConfirmationEmail(savedUser, confirmationToken);
         return savedUser;
-	}
+    }
 
-	public User update(Long id, User user, String role) {
-		try {
-			if (!userRepository.existsById(id)) {
-				throw new EntityNotFoundException("Usuário não encontrado");
-			}
+    public User update(Long id, User newUserData, String role) {
+        return userRepository.findById(id).map(existingUser -> {
+            applyUserUpdates(existingUser, newUserData, role);
+            return userRepository.save(existingUser);
+        }).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
 
-			User userTarget = userRepository.getReferenceById(id);
-			updateData(user, userTarget, role);
-			return userRepository.save(userTarget);
+    private void applyUserUpdates(User target, User source, String role) {
+        updateUserRole(target, role);
 
-		} catch (Exception e) {
-			e.printStackTrace(); // Para debugar o erro corretamente
-			return null;
-		}
-	}
+        target.setUsername(source.getUsername());
+        target.setEmail(source.getEmail());
+        target.setCpf(source.getCpf());
 
-	private void updateData(User user, User userTarget, String role) {
-		System.out.println("String Role: " + role);
+        if (!source.getPassword().equals(target.getPassword())) {
+            target.setPassword(encoder.passwordEnconder().encode(source.getPassword()));
+        }
+    }
 
-		try {
-			RoleName roleName = RoleName.valueOf(role.toUpperCase());
-			System.out.println("ROLENAME: " + roleName);
+    private void updateUserRole(User user, String role) {
+        RoleName roleName = RoleName.valueOf(role.toUpperCase());
+        Role newRole = roleRepository.findByName(roleName);
+        if (newRole == null) throw new IllegalArgumentException("Role não encontrada");
 
-			// Obtém a Role atual do usuário
-			Role oldRole = userTarget.getRoles().iterator().next();
-			System.out.println("ROLE: " + oldRole);
+        user.getRoles().clear();
+        user.getRoles().add(newRole);
+    }
 
-			// Remove a Role antiga corretamente
-			userTarget.getRoles().remove(oldRole);
-
-			// Busca a nova Role
-			Role newRole = roleRepository.findByName(roleName);
-			if (newRole != null) {
-				userTarget.getRoles().add(newRole);
-			} else {
-				throw new IllegalArgumentException("Role não encontrada: " + role);
-			}
-
-			// Atualiza os dados do usuário
-			userTarget.setUsername(user.getUsername());
-			userTarget.setEmail(user.getEmail());
-
-			// Atualiza senha apenas se for diferente da atual
-			if (!user.getPassword().equals(userTarget.getPassword())) {
-				userTarget.setPassword(encoder.passwordEnconder().encode(user.getPassword()));
-			}
-
-		} catch (IllegalArgumentException e) {
-			System.err.println("Erro ao converter Role: " + e.getMessage());
-		}
-	}
-
-	public void delete(Long id) {
-		try {
-			if(userRepository.existsById(id)) {
-				userRepository.deleteById(id);
-			} else {
-				throw new EntityNotFoundException("Usuário não encontrado");
-			}
-		} catch (Exception e) {
-			e.getStackTrace();
-		}
-	}
+    public void delete(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
+        userRepository.delete(user);
+    }
 } 

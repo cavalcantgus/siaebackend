@@ -27,6 +27,8 @@ public class UserController {
 	@Autowired UserService service;
     @Autowired
     private ConfirmationTokenService confirmationTokenService;
+    @Autowired
+    private UserService userService;
 
 	@GetMapping
 	public ResponseEntity<List<User>> findAll() {
@@ -75,8 +77,8 @@ public class UserController {
 	
 	@PutMapping("/{id}")
 	public ResponseEntity<User> update(@PathVariable Long id, @RequestBody UserDTO request) {
-		User user = request.getUser();
-		System.out.println("USUÁRIO: " + user.toString());
+		User user = userService.findById(request.getUserId());
+		System.out.println("USUÁRIO: " + user.getPassword());
 		String role = request.getRole();
 		System.out.println("USUÁRIO: " + role);
 		user = service.update(id, user, role);

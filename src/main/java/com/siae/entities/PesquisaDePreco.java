@@ -22,6 +22,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -51,18 +54,20 @@ public class PesquisaDePreco {
 
     @OneToMany(mappedBy = "pesquisa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonManagedReference("pesquisa-preco")
-	private List<Preco> precos = new ArrayList<>();
+
+	@NotEmpty(message = "Lista de preços não pode estar vazia")
+	@Valid
+	private List<@NotNull(message = "Preço não pode ser nulo") Preco> precos = new ArrayList<>();
 
 	@SuppressWarnings("deprecation")
 	public BigDecimal precoMedio() {
-	    // Filtrar valores nulos antes de calcular
 	    List<BigDecimal> valores = precos.stream()
 	        .map(Preco::getValor)
-	        .filter(Objects::nonNull) // Ignorar valores nulos
-	        .collect(Collectors.toList());
+	        .filter(Objects::nonNull)
+	        .toList();
 
 	    if (valores.isEmpty()) {
-	        return BigDecimal.ZERO; // Evitar divisão por zero
+	        return BigDecimal.ZERO;
 	    }
 
 	    BigDecimal soma = valores.stream()

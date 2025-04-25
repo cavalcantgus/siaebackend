@@ -58,4 +58,10 @@ public class ProjetoProduto {
 		this.inicioEntrega = inicioEntrega;
 		this.fimEntrega = fimEntrega;
 	}
+
+	public BigDecimal calculateTotal(BigDecimal precoMedio, BigDecimal quantidade) {
+		if(precoMedio == null || quantidade == null) return BigDecimal.ZERO;
+		return precoMedio.multiply(quantidade);
+	}
+
 }

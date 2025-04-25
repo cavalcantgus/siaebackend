@@ -3,6 +3,8 @@ package com.siae.services;
 import java.util.List;
 import java.util.Optional;
 
+import com.siae.exception.ResourceNotFoundException;
+import com.siae.mappers.ProductMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +16,15 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProdutoService {
 	
+	private final ProdutoRepository repository;
+    private final ProductMapper productMapper;
+
 	@Autowired
-	private ProdutoRepository repository;
-	
+	public ProdutoService(ProdutoRepository repository, ProductMapper productMapper) {
+		this.repository = repository;
+		this.productMapper = productMapper;
+	}
+
 	public List<Produto> findAll() {
 		return repository.findAll();
 	}
@@ -31,34 +39,15 @@ public class ProdutoService {
 	}
 	
 	public Produto update(Long id, Produto produto) {
-		try { 
-			Produto produtoTarget = repository.findById(id)
-					.orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
-			updateData(produto, produtoTarget);
-			return repository.save(produtoTarget);
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	private void updateData(Produto produto, Produto produtoTarget) {
-		produtoTarget.setDescricao(produto.getDescricao());
-		produtoTarget.setEspecificacao(produto.getEspecificacao());
-		produtoTarget.setUnidade(produto.getUnidade());
-		produtoTarget.setPrecoMedio(produto.getPrecoMedio());
+		Produto produtoTarget =
+				repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Produto"
+						, id));
+		productMapper.updateProduct(produtoTarget, produto);
+		return repository.save(produtoTarget);
 	}
 	
 	public void deleteById(Long id) {
-		try {
-			if(repository.existsById(id)) {
-				repository.deleteById(id);
-			} else {
-				throw new EntityNotFoundException("Produto não encontrado");
-			}
-		} catch (Exception e) {
-			e.getMessage();
-		}
+		Produto produto =  repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Produto", id));
+		repository.delete(produto);
 	}
 }

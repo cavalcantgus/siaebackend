@@ -2,9 +2,11 @@ package com.siae.services;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.siae.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +21,14 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class PesquisaDePrecoService {
 
-	@Autowired
-	private PesquisaDePrecoRepository repository;
+	private final PesquisaDePrecoRepository repository;
+	private final ProdutoService produtoService;
 
 	@Autowired
-	private ProdutoService produtoService;
+	public PesquisaDePrecoService(PesquisaDePrecoRepository repository, ProdutoService produtoService) {
+		this.repository = repository;
+		this.produtoService = produtoService;
+	}
 
 	public List<PesquisaDePreco> findAll() {
 		return repository.findAll();
@@ -32,11 +37,6 @@ public class PesquisaDePrecoService {
 	public PesquisaDePreco findById(Long id) {
 		Optional<PesquisaDePreco> pesquisa = repository.findById(id);
 		return pesquisa.orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
-	}
-	
-	public PesquisaDePreco findByProduto(Long produtoId) {
-		PesquisaDePreco pesquisa = repository.findByProdutoId(produtoId);
-		return pesquisa;
 	}
 
 	public PesquisaDePreco insert(PesquisaDePrecoDTO pesquisa) {
@@ -47,19 +47,7 @@ public class PesquisaDePrecoService {
 		pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
 		pesquisaDePreco.setQuantidade(pesquisa.getQuantidade());
 		
-		List<Preco> precos = pesquisa.getPreços().stream()
-				.map(preco -> {
-					Preco p = new Preco();
-					if(preco == null) {
-						p.setValor(BigDecimal.valueOf(0.0));
-					}
-					else {
-						p.setValor(preco);
-					}
-					p.setPesquisa(pesquisaDePreco);
-					return p;
-				})
-				.collect(Collectors.toList());
+		List<Preco> precos = createPrecos(pesquisa, pesquisaDePreco);
 		
 		pesquisaDePreco.setPrecos(precos);
 		BigDecimal precoMedio = pesquisaDePreco.precoMedio();
@@ -67,17 +55,24 @@ public class PesquisaDePrecoService {
 		produto.setPrecoMedio(precoMedio);
 		return repository.save(pesquisaDePreco);
 	}
+
+	private List<Preco> createPrecos(PesquisaDePrecoDTO pesquisaDePrecoDTO,
+									 PesquisaDePreco pesquisaDePreco) {
+		return pesquisaDePrecoDTO.getPrecos().stream()
+				.map(preco -> {
+					Preco p = new Preco();
+                    p.setValor(Objects.requireNonNullElse(preco, BigDecimal.ZERO));
+					p.setPesquisa(pesquisaDePreco);
+					return p;
+				})
+				.collect(Collectors.toList());
+	}
 	
-	public PesquisaDePreco update(Long id, PesquisaDePreco pesquisa) {	
-		try {
-			PesquisaDePreco pesquisaDePreco = repository.findById(id)
-					.orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
-			updateData(pesquisa, pesquisaDePreco);
-			return repository.save(pesquisaDePreco);
-		} catch(Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+	public PesquisaDePreco update(Long id, PesquisaDePreco pesquisa) {
+		PesquisaDePreco pesquisaTarget =
+				repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pesquisa", id));
+		updateData(pesquisa, pesquisaTarget);
+		return repository.save(pesquisaTarget);
 	}
 
 	private void updateData(PesquisaDePreco pesquisa, PesquisaDePreco pesquisaDePreco) {
@@ -85,46 +80,34 @@ public class PesquisaDePrecoService {
 	    pesquisaDePreco.setProduto(produto);
 	    pesquisaDePreco.setDataPesquisa(pesquisa.getDataPesquisa());
 		pesquisaDePreco.setQuantidade(pesquisa.getQuantidade());
-	    // Atualizar preços sem substituir diretamente a coleção
-	    List<Preco> precosExistentes = pesquisaDePreco.getPrecos();
-	    precosExistentes.clear(); // Limpa a lista existente
 
-	    pesquisa.getPrecos().forEach(precoDTO -> {
-	        if (precoDTO == null) {
-	            throw new IllegalArgumentException("Preço não pode ser nulo.");
-	        }
+		apllyUpadatesOnPrices(pesquisa, pesquisaDePreco);
 
-	        Preco preco = new Preco();
-	        preco.setId(precoDTO.getId());
-
-	        if (precoDTO.getValor() == null) {
-	            throw new IllegalArgumentException("Valor do preço não pode ser nulo.");
-	        }
-
-	        preco.setValor(precoDTO.getValor());
-	        preco.setPesquisa(pesquisaDePreco);
-	        precosExistentes.add(preco);
-	    });
-
-	    // Calcular preço médio
 	    BigDecimal precoMedio = pesquisaDePreco.precoMedio();
 	    pesquisaDePreco.setPrecoMedio(precoMedio);
 	    produto.setPrecoMedio(precoMedio);
 	}
 
+	private void apllyUpadatesOnPrices(PesquisaDePreco pesquisa, PesquisaDePreco pesquisaTarget) {
+		List<Preco> precosExistentes = pesquisaTarget.getPrecos();
+		precosExistentes.clear();
+
+		pesquisa.getPrecos().forEach(precoDTO -> {
+			Preco preco = new Preco();
+			preco.setId(precoDTO.getId());
+
+			preco.setValor(precoDTO.getValor());
+			preco.setPesquisa(pesquisaTarget);
+			precosExistentes.add(preco);
+		});
+	}
 	
 	public void deleteById(Long id) {
-		try {
-			if(repository.existsById(id)) {
-				PesquisaDePreco pesquisa = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Pesquisa não encontrada"));
-				Produto produto = produtoService.findById(pesquisa.getProduto().getId());
-				produto.setPrecoMedio(BigDecimal.valueOf(0.0));
-				repository.deleteById(id);
-			} else {
-				throw new EntityNotFoundException("Pesquisa não encontrada");
-			}
-		} catch (Exception e) {
-			e.getMessage();
-		}
+		PesquisaDePreco pesquisaDePreco = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(
+				"Pesquisa", id));
+
+		Produto produto = produtoService.findById(pesquisaDePreco.getProduto().getId());
+		produto.setPrecoMedio(BigDecimal.ZERO);
+		repository.delete(pesquisaDePreco);
 	}
 }

@@ -3,6 +3,7 @@ package com.siae.controllers;
 import java.net.URI;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,7 +36,7 @@ public class PesquisaDePrecoController {
 	// @GetMapping(/{id})
 	
 	@PostMapping("/pesquisa")
-	public ResponseEntity<PesquisaDePreco> insert(@RequestBody PesquisaDePrecoDTO obj) {
+	public ResponseEntity<PesquisaDePreco> insert(@Valid @RequestBody PesquisaDePrecoDTO obj) {
 		PesquisaDePreco pesquisa = service.insert(obj);
 		
 		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(pesquisa.getId()).toUri();
@@ -44,7 +45,8 @@ public class PesquisaDePrecoController {
 	}
 	
 	@PutMapping("/pesquisa/{id}") 
-	public ResponseEntity<PesquisaDePreco> update(@PathVariable Long id, @RequestBody PesquisaDePreco obj) {
+	public ResponseEntity<PesquisaDePreco> update(@Valid @PathVariable Long id,
+												  @RequestBody PesquisaDePreco obj) {
 		PesquisaDePreco pesquisa = service.update(id, obj);
 		return ResponseEntity.ok().body(pesquisa);
 	}

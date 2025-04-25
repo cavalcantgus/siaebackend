@@ -6,6 +6,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,5 +24,7 @@ public class PesquisaDePrecoDTO {
 	private BigDecimal quantidade;
 	
 	@JsonProperty("precos")
-	private List<BigDecimal> preços;
+	@NotEmpty(message = "Lista de preços não pode ser nula")
+	@Valid
+	private List<@NotNull(message = "Valor não pode ser nulo") BigDecimal> precos;
 }

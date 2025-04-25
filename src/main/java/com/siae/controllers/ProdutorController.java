@@ -31,11 +31,14 @@ import com.siae.services.ProdutorService;
 @RequestMapping("/public/produtores")
 public class ProdutorController {
 
-    @Autowired
-    private ProdutorService service;
+    private final ProdutorService service;
+    private final ProdutoresPDF pdfService;
 
     @Autowired
-    private ProdutoresPDF pdfService;
+    public ProdutorController(ProdutorService service, ProdutoresPDF pdfService)  {
+        this.service = service;
+        this.pdfService = pdfService;
+    }
     
     @GetMapping
     public ResponseEntity<List<Produtor>> findAll() {

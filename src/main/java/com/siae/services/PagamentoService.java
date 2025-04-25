@@ -120,6 +120,7 @@ public class PagamentoService {
         return pagamentoRepository.saveAll(pagamentosMap.values());
     }
 
+    @Transactional
     public Pagamento update(Long id, Pagamento pagamento, MultipartFile notaFiscal) {
         try {
             if (pagamentoRepository.existsById(id)) {

@@ -8,6 +8,7 @@ import com.siae.repositories.NotificacaoRepository;
 import com.siae.repositories.NotificacaoUsuarioRepository;
 import com.siae.repositories.RoleRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -95,9 +96,15 @@ public class NotificacaoService {
         }
     }
 
+    @Transactional
     public void enviarNotificacaoParaUsuario(Long produtorId, int size) {
         Produtor produtor = produtorService.findById(produtorId);
-        User user = userService.findByCpf(produtor.getCpf());
+        User user = null;
+        try {
+            user = userService.findByCpf(produtor.getCpf());
+        } catch (EntityNotFoundException e) {
+            System.out.println("Usuário com CPF " + produtor.getCpf() + " não encontrado.");
+        }
         String titulo = size > 1 ? " entregas enviadas para o pagamento" : "entrega enviada para " +
                 "o pagamento";
         if(user != null) {

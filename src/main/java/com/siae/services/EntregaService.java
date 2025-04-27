@@ -2,6 +2,7 @@ package com.siae.services;
 
 import com.siae.dto.EntregaDTO;
 import com.siae.entities.*;
+import com.siae.exception.ResourceNotFoundException;
 import com.siae.repositories.DetalhesEntregaRepository;
 import com.siae.repositories.EntregaPagamentoRepository;
 import com.siae.repositories.EntregaRepository;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -93,15 +93,10 @@ public class EntregaService {
 
     @Transactional
     public Entrega update(Long id, Entrega entrega) {
-        try {
-            Entrega novaEntrega = entregaRepository.findById(entrega.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Entrega não encontrada"));
-            updateData(entrega, novaEntrega);
-            return entregaRepository.save(novaEntrega);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        Entrega novaEntrega = entregaRepository.findById(entrega.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Entrega", id));
+        updateData(entrega, novaEntrega);
+        return entregaRepository.save(novaEntrega);
     }
 
     @Transactional
@@ -218,14 +213,7 @@ public class EntregaService {
     }
 
     public void deleteById(Long id) {
-        try {
-            if (id != null && entregaRepository.existsById(id)) {
-                entregaRepository.deleteById(id);
-            } else {
-                throw new EntityNotFoundException("Entrega não encontrada");
-            }
-        } catch (Exception e) {
-            e.getMessage();
-        }
+        Entrega entrega = entregaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entrega", id));
+        entregaRepository.delete(entrega);
     }
 }

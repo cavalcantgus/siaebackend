@@ -110,7 +110,6 @@ public class ProjetoDeVendaService {
         updateData(projeto, projetoDeVenda);
         return repository.save(projetoDeVenda);
 
-
     }
 
     @Transactional

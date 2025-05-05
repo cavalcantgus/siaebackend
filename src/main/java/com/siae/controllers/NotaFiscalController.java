@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
-@RequestMapping("/notas")
+@RequestMapping("/public/notas")
 public class NotaFiscalController {
 
     private final NotaFiscalService notaFiscalService;

@@ -59,7 +59,7 @@ public class PagamentoService {
     }
 
     @Transactional
-    public List<Pagamento> sendToPayment(List<Entrega> entregas) {
+    public List<Pagamento> sendToPayment(List<Entrega> entregas, String mesReferente) {
         if (entregas.isEmpty()) {
             throw new IllegalArgumentException("Lista de entregas vazia");
         }
@@ -81,6 +81,7 @@ public class PagamentoService {
                 pagamento.setQuantidade(BigDecimal.ZERO);
                 pagamento.setTotal(BigDecimal.ZERO);
                 pagamento.setData(LocalDate.now());
+                pagamento.setMesReferente(mesReferente);
                 pagamento.setStatus(StatusPagamento.AGUARDANDO_NF);
                 pagamentosMap.put(produtorId, pagamento);
             }

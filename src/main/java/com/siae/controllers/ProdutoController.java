@@ -39,6 +39,12 @@ public class ProdutoController {
 		return ResponseEntity.ok().body(produtos);
 	}
 
+	@GetMapping("/poduto/{id}")
+	public ResponseEntity<Produto> findById(@PathVariable Long id) {
+		Produto produto = service.findById(id);
+		return ResponseEntity.ok().body(produto);
+	}
+
 	@GetMapping("/relatorio/generate")
 	public ResponseEntity<?> generatePdf() {
 		List<Produto> produtos = service.findAll();

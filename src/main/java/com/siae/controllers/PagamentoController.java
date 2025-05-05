@@ -71,9 +71,10 @@ public class PagamentoController {
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 
-    @PostMapping("/pagamento")
-    public ResponseEntity<List<Pagamento>> sendToPayment(@RequestBody List<Entrega> entregas){
-        List<Pagamento> pagamentos = pagamentoService.sendToPayment(entregas);
+    @PostMapping("/pagamento/{mes}")
+    public ResponseEntity<List<Pagamento>> sendToPayment(@RequestBody List<Entrega> entregas,
+                                                         @PathVariable String mes){
+        List<Pagamento> pagamentos = pagamentoService.sendToPayment(entregas, mes);
         return ResponseEntity.ok().body(pagamentos);
     }
 

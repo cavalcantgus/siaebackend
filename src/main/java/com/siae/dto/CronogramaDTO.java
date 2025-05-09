@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class CronogramaDTO {
-
     private Long produtorId;
+    private String mesReferente;
     List<ProdutoCronogramaDTO> detalhes;
 }

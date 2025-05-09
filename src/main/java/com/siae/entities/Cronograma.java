@@ -27,6 +27,7 @@ public class Cronograma {
 
     private BigDecimal total;
     private  BigDecimal quantidade;
+    private String mesReferente;
 
     @ManyToOne
     private Produtor produtor;

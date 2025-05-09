@@ -51,7 +51,7 @@ public class CronogramaService {
                         .orElseThrow(() -> new ResourceNotFoundException("Produtor", cronogramaDto.getProdutorId()));
         Cronograma cronograma = new Cronograma();
         cronograma.setProdutor(produtor);
-
+        cronograma.setMesReferente(cronogramaDto.getMesReferente());
         List<DetalhesCronograma> detalhesCronogramas  = new ArrayList<>();
         cronogramaRepository.save(cronograma);
 

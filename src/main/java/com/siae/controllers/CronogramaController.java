@@ -28,6 +28,12 @@ public class CronogramaController {
         return ResponseEntity.ok().body(cronogramas);
     }
 
+    @GetMapping("/cronograma/{produtorId}")
+    public ResponseEntity<List<Cronograma>> findByProdutorId(@PathVariable Long produtorId) {
+        List<Cronograma>  cronogramas = cronogramaService.findByProdutorId(produtorId);
+        return ResponseEntity.ok().body(cronogramas);
+    }
+
     @PostMapping("/cronograma")
     public ResponseEntity<CronogramaDTO> insert(@RequestBody CronogramaDTO cronogramaDTO) {
         Cronograma cronograma = cronogramaService.insert(cronogramaDTO);

@@ -40,6 +40,10 @@ public class CronogramaService {
         return cronogramaRepository.findAll();
     }
 
+    public List<Cronograma> findByProdutorId(Long produtorId) {
+        return cronogramaRepository.findByProdutorId(produtorId);
+    }
+
     public Cronograma findById(Long id) {
         return cronogramaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cronograma", id));
     }

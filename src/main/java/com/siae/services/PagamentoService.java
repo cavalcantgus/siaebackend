@@ -97,13 +97,13 @@ public class PagamentoService {
         for(Pagamento pagamento : savedPayments) {
             List<Entrega> entregasRelacionadas = entregasPorPagamento.get(pagamento);
             entregaPagamentoService.mountEntregaPagamento(entregasRelacionadas, pagamento);
-//            notificacaoService.enviarNotificacaoParaUsuario(pagamento.getProdutor().getId(),
-//                    entregasRelacionadas.size());
+            notificacaoService.enviarNotificacaoParaUsuario(pagamento.getProdutor().getId(),
+                    entregasRelacionadas.size());
 
         }
 
-//        notificacaoService.enviarNotificacaoParaRole("Novos Pagamentos Disponíveis",
-//                "Entregas foram enviadas para o pagamento.", RoleName.PAGAMENTO);
+        notificacaoService.enviarNotificacaoParaRole("Novos Pagamentos Disponíveis",
+                "Entregas foram enviadas para o pagamento.", RoleName.PAGAMENTO);
 
         return savedPayments;
     }

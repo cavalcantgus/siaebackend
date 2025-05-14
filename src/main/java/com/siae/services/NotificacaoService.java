@@ -2,7 +2,6 @@ package com.siae.services;
 
 import com.siae.entities.*;
 import com.siae.enums.RoleName;
-import com.siae.messaging.EmailConsumer;
 import com.siae.messaging.RabbitMQProducer;
 import com.siae.repositories.NotificacaoRepository;
 import com.siae.repositories.NotificacaoUsuarioRepository;
@@ -15,7 +14,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificacaoService {
@@ -24,17 +22,16 @@ public class NotificacaoService {
     private final RoleRepository roleRepository;
     private final NotificacaoUsuarioRepository notificacaoUsuarioRepository;
     private final ProdutorService produtorService;
-    private final EmailConsumer emailConsumer;
     private final RabbitMQProducer rabbitMQProducer;
-    private NotificacaoRepository notificacaoRepository;
+    private final NotificacaoRepository notificacaoRepository;
 
-    public NotificacaoService(NotificacaoRepository notificacaoRepository, UserService userService, RoleRepository roleRepository, NotificacaoUsuarioRepository notificacaoUsuarioRepository, ProdutorService produtorService, EmailConsumer emailConsumer, RabbitMQProducer rabbitMQProducer) {
+    public NotificacaoService(NotificacaoRepository notificacaoRepository,
+                              UserService userService, RoleRepository roleRepository, NotificacaoUsuarioRepository notificacaoUsuarioRepository, ProdutorService produtorService, RabbitMQProducer rabbitMQProducer) {
         this.notificacaoRepository = notificacaoRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.notificacaoUsuarioRepository = notificacaoUsuarioRepository;
         this.produtorService = produtorService;
-        this.emailConsumer = emailConsumer;
         this.rabbitMQProducer = rabbitMQProducer;
     }
 
@@ -77,6 +74,7 @@ public class NotificacaoService {
 
     public void enviarNotificacaoParaRole(String titulo, String mensagem, RoleName roleName) {
         Role role = roleRepository.findByName(roleName);
+        if (role == null) return;
 
         Notificacao notificacao = new Notificacao();
         notificacao.setTitulo(titulo);
@@ -86,8 +84,9 @@ public class NotificacaoService {
         notificacaoRepository.save(notificacao);
 
         List<User> usuarios = userService.findUsersByRole(roleName);
+        if (usuarios == null || usuarios.isEmpty()) return;
 
-        for(User user : usuarios){
+        for (User user : usuarios) {
             NotificacaoUsuario notificacaoUsuario = new NotificacaoUsuario();
             notificacaoUsuario.setUsuario(user);
             notificacaoUsuario.setNotificacao(notificacao);
@@ -96,21 +95,19 @@ public class NotificacaoService {
         }
     }
 
+
     @Transactional
     public void enviarNotificacaoParaUsuario(Long produtorId, int size) {
         Produtor produtor = produtorService.findById(produtorId);
-        User user = null;
-        try {
-            user = userService.findByCpf(produtor.getCpf());
-        } catch (EntityNotFoundException e) {
-            System.out.println("Usuário com CPF " + produtor.getCpf() + " não encontrado.");
-        }
-        String titulo = size > 1 ? " entregas enviadas para o pagamento" : "entrega enviada para " +
-                "o pagamento";
-        if(user != null) {
+        Optional<User> optionalUser = userService.findByCpf(produtor.getCpf());
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            String titulo = size + (size > 1 ? " entregas enviadas para o pagamento" : " entrega enviada para o pagamento");
+
             Notificacao notificacao = new Notificacao();
-            notificacao.setTitulo(size + titulo);
-            notificacao.setMensagem("Você tem " + size + titulo  + " e aguardando efetuação");
+            notificacao.setTitulo(titulo);
+            notificacao.setMensagem("Você tem " + titulo + " e aguardando efetuação");
             notificacao.setData(LocalDate.now());
             notificacaoRepository.save(notificacao);
 
@@ -128,13 +125,14 @@ public class NotificacaoService {
     }
 
 
-    public void notificacaoPagamentoEfetuado(Produtor produto){
-        User user = userService.findByCpf(produto.getCpf());
-        String titulo = "Pagamento efetuado";
+    public void notificacaoPagamentoEfetuado(Produtor produtor) {
+        Optional<User> optionalUser = userService.findByCpf(produtor.getCpf());
 
-        if(user != null) {
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
             Notificacao notificacao = new Notificacao();
-            notificacao.setTitulo(titulo);
+            notificacao.setTitulo("Pagamento efetuado");
             notificacao.setMensagem("Você tem pagamento com status EFETUADO");
             notificacao.setData(LocalDate.now());
             notificacaoRepository.save(notificacao);

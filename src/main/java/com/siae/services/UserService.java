@@ -53,9 +53,12 @@ public class UserService {
         return user.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     }
 
-    public User findByCpf(String cpf) {
-		if(cpf == null || cpf.isEmpty()) throw new IllegalArgumentException("Cpf não pode ser nulo");
-        return userRepository.findByCpf(cpf).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    public Optional<User> findByCpf(String cpf) {
+        try {
+            return Optional.of(userRepository.findByCpf(cpf));
+        } catch (EntityNotFoundException e) {
+            return Optional.empty();
+        }
     }
 
     public User insert(User user) {

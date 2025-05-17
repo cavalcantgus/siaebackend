@@ -175,6 +175,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+				 <compress>true</compress>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

@@ -3,6 +3,7 @@ version:  '3.1'
 services:
 
  spring-app:
+  platform: linux/amd64
   build:
    context: .
    dockerfile: Dockerfile
@@ -53,7 +54,7 @@ services:
    - mynetwork
 
  rabbitmq:
-  image: rabbitmq:3-management
+  image: rabbitmq:3.12-management-alpine
   container_name: rabbitmq
   ports:
     - "5672:5672"      # Porta padrão usada pelo Spring

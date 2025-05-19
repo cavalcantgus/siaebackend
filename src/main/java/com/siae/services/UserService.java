@@ -55,7 +55,7 @@ public class UserService {
 
     public Optional<User> findByCpf(String cpf) {
         try {
-            return Optional.of(userRepository.findByCpf(cpf));
+            return Optional.ofNullable(userRepository.findByCpf(cpf));
         } catch (EntityNotFoundException e) {
             return Optional.empty();
         }
